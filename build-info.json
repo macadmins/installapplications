@@ -1,0 +1,14 @@
+{
+    "distribution_style": true,
+    "identifier": "com.erikng.installapplications",
+    "install_location": "/",
+    "name": "InstallApplications-${version}.pkg",
+    "ownership": "recommended",
+    "postinstall_action": "none",
+    "signing_info": {
+        "identity": "YOUR IDENTITY FROM LOGIN KEYCHAIN",
+        "timestamp": true
+    },
+    "suppress_bundle_relocation": true,
+    "version": "1.0"
+}
