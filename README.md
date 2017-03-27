@@ -66,3 +66,36 @@ The following is an example JSON:
   ]
 }
 ```
+
+## Basic Authentication
+If you would like to use basic authentication for your JSON file, in the `installapplications.py` change the following:
+
+```python
+# json data for gurl download
+json_data = {
+        'url': jsonurl,
+        'file': jsonpath,
+    }
+```
+
+### Username/Password
+```python
+# json data for gurl download
+json_data = {
+        'url': jsonurl,
+        'file': jsonpath,
+        'username': 'test',
+        'password': 'test',
+    }
+```
+
+### Headers
+
+```python
+# json data for gurl download
+json_data = {
+        'url': jsonurl,
+        'file': jsonpath,
+        'additional_headers': {'Authorization': 'Basic dGVzdDp0ZXN0'},
+    }
+```
