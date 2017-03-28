@@ -2,11 +2,15 @@
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
 ## Stages
-There are currently two stages of packages:
+There are currently three stages of packages:
+- PreStage
+ - Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant.
 - Stage 1
- - Packages that should be prioritized for download/installation. This could be your UI tooling that informs the user that a DEP workflow is being used.
+ - Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
 - Stage 2
- - Packages that can be installed _after_ some kind of UI element has been processed.
+ - Packages that need to be installed, but are not needed immediately.
+
+ By utilizing PreStage/Stage1, you can have **almost instant UI notifications** for your users.
 
 ## Notes
 - InstallApplications will only begin Stage 1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
@@ -50,6 +54,13 @@ The JSON structure is quite simple. You supply the following:
 The following is an example JSON:
 ```json
 {
+  "prestage": [
+    {
+      "file": "/private/tmp/installapplications/prestage.pkg",
+      "url": "https://domain.tld/prestage.pkg",
+      "hash": "sha256 hash"
+    }
+  ],
   "stage1": [
     {
       "file": "/private/tmp/installapplications/stage1.pkg",

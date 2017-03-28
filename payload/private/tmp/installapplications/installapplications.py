@@ -157,7 +157,7 @@ def main():
     iajson = json.loads(open(jsonpath).read())
 
     # Process both stages
-    stages = ['stage1', 'stage2']
+    stages = ['prestage', 'stage1', 'stage2']
     for stage in stages:
         # Loop through the packages and download them.
         for x in iajson[stage]:
