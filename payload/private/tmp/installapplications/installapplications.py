@@ -186,10 +186,11 @@ def main():
         # session. Stage 1 is ideally used for installing files you need
         # immediately.
         if stage == 'stage1':
-            while (getconsoleuser() is None
-                   or getconsoleuser() == u"loginwindow"
-                   or getconsoleuser() == u"_mbsetupuser"):
-                time.sleep(1)
+            if packagelist:
+                while (getconsoleuser() is None
+                       or getconsoleuser() == u"loginwindow"
+                       or getconsoleuser() == u"_mbsetupuser"):
+                    time.sleep(1)
 
         # Time to install.
         for packagepath in packagelist:
