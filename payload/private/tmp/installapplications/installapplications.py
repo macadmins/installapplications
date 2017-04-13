@@ -34,7 +34,7 @@ import shutil
 import subprocess
 import sys
 import time
-sys.path.append('/private/tmp/installapplications')
+sys.path.append('/usr/local/installapplications')
 # PEP8 can really be annoying at times.
 import gurl  # noqa
 
@@ -201,8 +201,8 @@ def main():
     # Kill the launchdaemon
     os.remove(ialdpath)
 
-    # Kill the dep bootstrap path.
-    shutil.rmtree(iapath)
+    # Kill the bootstrap path.
+    shutil.rmtree('/usr/local/installapplications')
 
 
 if __name__ == '__main__':
