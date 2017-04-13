@@ -7,7 +7,7 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/bin/python</string>
-		<string>/private/tmp/installapplications/installapplications.py</string>
+		<string>/usr/local/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
 	</array>
