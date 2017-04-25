@@ -4,11 +4,12 @@ InstallApplications is an alternative to tools like [PlanB](https://github.com/g
 ## Stages
 There are currently three stages of packages:
 - PreStage
- - Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant.
+ - Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
 - Stage 1
  - Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
 - Stage 2
  - Packages that need to be installed, but are not needed immediately.
+ - Stage 2 begins immediately after the conclusion of Stage 1.
 
  By utilizing PreStage/Stage1, you can have **almost instant UI notifications** for your users.
 
@@ -16,7 +17,7 @@ There are currently three stages of packages:
 - InstallApplications will only begin Stage 1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
 
 ### Signing
-You will **NEED** to sign this package for use with DEP/MDM.
+You will **NEED** to sign this package for use with DEP/MDM. To acquire a signing certificate, join the [Apple Developers Program](https://developer.apple.com).
 
 Open the `build-info.json` file and specify your signing certificate.
 
@@ -28,15 +29,17 @@ Open the `build-info.json` file and specify your signing certificate.
 ```
 
 ### Configuring LaunchDaemon for your json
-Simply specify a url to your json file in the LaunchDaemon plist.
+Simply specify a url to your json file in the LaunchDaemon plist, located in the payload/Library/LaunchDaemons folder in the root of the project.
 
 ```xml
 <string>--jsonurl</string>
 <string>https://domain.tld</string>
 ```
 
+NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the installapplications.py script on Lines XXX to reflect this change.
+
 ### Building a package
-This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg).
+This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 
 `./munkipkg /path/to/repository`
 
@@ -44,6 +47,8 @@ This repository has been setup for use with [munkipkg](https://github.com/munki/
 Each package must have a SHA256 hash stored in the JSON. You can easily create hashes with the following command:
 
 `/usr/bin/shasum -a 256 /path/to/pkg`
+
+This guarantees that the package you place on the web for download is the package that gets installed by InstallApplication. If the hash does not match, InstallApplication will attempt to re-download and re-check.
 
 ### JSON Structure
 The JSON structure is quite simple. You supply the following:
@@ -78,8 +83,12 @@ The following is an example JSON:
 }
 ```
 
+URLs should not be subject to redirection, or there may be unintended behavior. Please link directly to the URI of the package. 
+
+You may have more than one package in each stage. Packages will be deployed in alphabetical order, not listed order, so if you want packages installed in a certain order, begin their file names with 1-, 2-, 3- as the case may be.
+
 ## Basic Authentication
-If you would like to use basic authentication for your JSON file, in the `installapplications.py` change the following:
+If you would like to use basic authentication for your JSON file, in  `installapplications.py` change the following:
 
 ```python
 # json data for gurl download
