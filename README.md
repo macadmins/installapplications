@@ -36,7 +36,7 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 <string>https://domain.tld</string>
 ```
 
-NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the installapplications.py script on Lines XXX to reflect this change.
+NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the installapplications.py script on Lines XXX to reflect this change, as well as in the postinstall script in the scripts folder.
 
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
