@@ -1,4 +1,6 @@
 # InstallApplications
+![InstallApplications icon](/icon/installapplications.png?raw=true)
+
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
 ## Stages
@@ -36,7 +38,7 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 <string>https://domain.tld</string>
 ```
 
-NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the installapplications.py script on Lines XXX to reflect this change, as well as in the postinstall script in the scripts folder.
+NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the variable `ialdpath` in installapplications.py, as well as in the `launchctld` call in the postinstall script.
 
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
@@ -83,7 +85,7 @@ The following is an example JSON:
 }
 ```
 
-URLs should not be subject to redirection, or there may be unintended behavior. Please link directly to the URI of the package. 
+URLs should not be subject to redirection, or there may be unintended behavior. Please link directly to the URI of the package.
 
 You may have more than one package in each stage. Packages will be deployed in alphabetical order, not listed order, so if you want packages installed in a certain order, begin their file names with 1-, 2-, 3- as the case may be.
 
