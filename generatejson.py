@@ -4,11 +4,13 @@
 # Generate Json file for installapplications
 # Usage: python generatejson.py --rootdir /path/to/rootdir
 #
-# --rootdir should be the directory that contains each stage's pkgs directory
+# --rootdir path is the directory that contains each stage's pkgs directory
+# As of InstallApplications 5/13/17, the directories must be named (lowercase):
+#   'prestage', 'stage1', and 'stage3'
+#
 # The generated Json will be saved in the root directory
-# Future plan for this script is to add AWS S3 integration for auto-upload
+# Future plan for this tool is to add AWS S3 integration for auto-upload
 
-# Written by John Richards
 import hashlib
 import json
 import optparse
@@ -61,7 +63,7 @@ def main():
                 stages[filestage].append(filejson)
 
     # Saving the file back in the root dir
-    savepath = os.path.join(rootdir, "IAPackages.json")
+    savepath = os.path.join(rootdir, "bootstrap.json")
     with open(savepath, 'w') as outfile:
         json.dump(stages, outfile, sort_keys=True, indent=2)
 

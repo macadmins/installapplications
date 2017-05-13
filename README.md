@@ -89,6 +89,22 @@ URLs should not be subject to redirection, or there may be unintended behavior. 
 
 You may have more than one package in each stage. Packages will be deployed in alphabetical order, not listed order, so if you want packages installed in a certain order, begin their file names with 1-, 2-, 3- as the case may be.
 
+Using `generatejson.py` you can automatically generate the json with the file and hash keys populated.
+In order to do this, simply organize your packages in lowercase directories in a "root directory" as shown below:
+```
+.
+├── rootdir
+│   ├── prestage
+│   ├── stage1
+│   └── stage2
+```
+
+Then run the tool:
+```$ python generatejson.py --rootdir /path/to/rootdir
+```
+
+
+
 ## Basic Authentication
 If you would like to use basic authentication for your JSON file, in  `installapplications.py` change the following:
 
