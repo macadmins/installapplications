@@ -196,7 +196,10 @@ def main():
         for packagepath in packagelist:
             print("Installing %s" % (packagepath))
             installpackage(packagepath)
-            os.remove(packagepath)
+            try:
+                os.remove(packagepath)
+            except Exception:
+                pass
 
     # Kill the launchdaemon
     os.remove(ialdpath)
