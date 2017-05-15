@@ -101,7 +101,7 @@ In order to do this, simply organize your packages in lowercase directories in a
 
 Then run the tool:
 ```
-$ python generatejson.py --rootdir /path/to/rootdir
+python generatejson.py --rootdir /path/to/rootdir
 ```
 
 
