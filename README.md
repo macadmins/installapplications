@@ -40,6 +40,12 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 
 NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the variable `ialdpath` in installapplications.py, as well as in the `launchctld` call in the postinstall script.
 
+#### Optional Reboot
+If after installing all of your packages, you want to force a reboot, simply uncomment the flag in the launchdaemon plist.
+```xml
+		<string>--reboot</string>
+```
+
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 
