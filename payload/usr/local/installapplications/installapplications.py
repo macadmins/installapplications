@@ -114,8 +114,9 @@ def main():
     # Options
     usage = '%prog [options]'
     o = optparse.OptionParser(usage=usage)
-    o.add_option('--jsonurl',
-                 help=('Required: URL to json file.'))
+    o.add_option('--jsonurl', help=('Required: URL to json file.'))
+    o.add_option('--reboot', default=None,
+                 help=('Optional: Trigger a reboot.'), action='store_true')
 
     opts, args = o.parse_args()
 
@@ -156,7 +157,7 @@ def main():
     # Load up file to grab all the packages.
     iajson = json.loads(open(jsonpath).read())
 
-    # Process both stages
+    # Process all stages
     stages = ['prestage', 'stage1', 'stage2']
     for stage in stages:
         # Loop through the packages and download them.
@@ -206,6 +207,10 @@ def main():
 
     # Kill the bootstrap path.
     shutil.rmtree('/usr/local/installapplications')
+
+    # Trigger a reboot
+    if opts.reboot:
+        subprocess.call(['/sbin/shutdown', '-r', 'now'])
 
 
 if __name__ == '__main__':
