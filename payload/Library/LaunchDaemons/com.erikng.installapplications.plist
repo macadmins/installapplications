@@ -10,6 +10,7 @@
 		<string>/usr/local/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
+		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
   <true/>
