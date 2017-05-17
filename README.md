@@ -3,20 +3,44 @@
 
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
+## Supported MDMs
+- AirWatch
+- MicroMDM
+- SimpleMDM
+
+### A note about other MDMs
+While other MDMs could _technically_ install this tool, the mechanism greatly differs. Other MDMs currently use `InstallApplication` API to install their binary. From here, you could then install this tool.
+
+Unfortunately, by doing this, you lose many of the features of `InstallApplications`, the primary one being speed.
+
+Example: Jamf Pro
+
+Jamf Pro would install the `jamf` binary first, rather than InstallApplications. An admin would need to scope a policy through the console in order to install this tool and it cannot be 100% validated that InstallApplications will be installed during the SetupAssistant process.
+
+## How this process works:
+During a DEP SetupAssistant workflow (with a supported MDM), the following will happen:
+
+1. MDM will send a push request utilizing `InstallApplication` to inform the device of a package installation.
+2. InstallApplications (this tool) will install and load it's LaunchDaemon.
+3. InstallApplications will begin to install your prestage packages (if configured) during the SetupAssistant.
+4. If stage1 packages are configured, InstallApplications will wait until the user is in their active session before installing.
+5. If stage 2 packages are configured, InstallApplications will install these packages during the user session.
+6. InstallApplications will gracefully exit and kill it's process.
+
 ## Stages
 There are currently three stages of packages:
-- PreStage
+- prestage
  - Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
-- Stage 1
+- stage1
  - Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
-- Stage 2
+- stage2
  - Packages that need to be installed, but are not needed immediately.
- - Stage 2 begins immediately after the conclusion of Stage 1.
+ - stage2 begins immediately after the conclusion of stage1.
 
  By utilizing PreStage/Stage1, you can have **almost instant UI notifications** for your users.
 
 ## Notes
-- InstallApplications will only begin Stage 1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
+- InstallApplications will only begin stage1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
 
 ### Signing
 You will **NEED** to sign this package for use with DEP/MDM. To acquire a signing certificate, join the [Apple Developers Program](https://developer.apple.com).
