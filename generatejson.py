@@ -9,9 +9,7 @@
 #   'prestage', 'stage1', and 'stage3'
 #
 # The generated Json will be saved in the root directory
-# Future plan for this tool is to add AWS S3 integration for auto-upload
 
-import argparse
 import hashlib
 import json
 import optparse
