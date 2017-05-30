@@ -17,8 +17,9 @@ import optparse
 import os
 import sys
 
-# Hash function borrowed from InstallApplications.py, thanks Erik
+
 def gethash(filename):
+    # Credit to Erik Gomez
     hash_function = hashlib.sha256()
     if not os.path.isfile(filename):
         return 'NOT A FILE'
@@ -31,6 +32,7 @@ def gethash(filename):
         hash_function.update(chunk)
     fileref.close()
     return hash_function.hexdigest()
+
 
 def main():
     usage = '%prog --rootdir <filepath>'
@@ -59,7 +61,7 @@ def main():
                             os.path.join(filepath, os.pardir)))
                 filejson = {"file":
                             "/private/tmp/installapplications/%s" % filename,
-                            "url": "", "hash:": str(filehash)}
+                            "url": "", "hash": str(filehash)}
                 stages[filestage].append(filejson)
 
     # Saving the file back in the root dir
