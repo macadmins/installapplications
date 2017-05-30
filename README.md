@@ -29,15 +29,15 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 
 ## Stages
 There are currently three stages of packages:
-- prestage
- - Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
-- stage1
- - Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
-- stage2
- - Packages that need to be installed, but are not needed immediately.
- - stage2 begins immediately after the conclusion of stage1.
+#### prestage ####
+- Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
+#### stage1 ####
+- Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
+#### stage2 ####
+- Packages that need to be installed, but are not needed immediately.
+- stage2 begins immediately after the conclusion of stage1.
 
- By utilizing PreStage/Stage1, you can have **almost instant UI notifications** for your users.
+By utilizing prestage/stage1, you can have **almost instant UI notifications** for your users.
 
 ## Notes
 - InstallApplications will only begin stage1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
