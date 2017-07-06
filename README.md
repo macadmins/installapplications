@@ -70,6 +70,32 @@ If after installing all of your packages, you want to force a reboot, simply unc
 		<string>--reboot</string>
 ```
 
+#### Basic Auth
+Currently, Basic Authentication is only supported by using `--headers` flag.
+
+The authentication should be passed as a base64 encoded username:password, including the Basic string.
+
+Example:
+
+```python
+import base64
+
+base64.b64encode('test:test')
+'dGVzdDp0ZXN0'
+
+up = base64.b64encode('test:test')
+
+print 'Basic ' + up
+Basic dGVzdDp0ZXN0
+```
+
+In the LaunchDaemon add the following:
+
+```xml
+		<string>--headers</string>
+    <string>Basic dGVzdDp0ZXN0</string>
+```
+
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 
@@ -132,39 +158,4 @@ In order to do this, simply organize your packages in lowercase directories in a
 Then run the tool:
 ```
 python generatejson.py --rootdir /path/to/rootdir
-```
-
-
-
-## Basic Authentication
-If you would like to use basic authentication for your JSON file, in  `installapplications.py` change the following:
-
-```python
-# json data for gurl download
-json_data = {
-        'url': jsonurl,
-        'file': jsonpath,
-    }
-```
-
-### Username/Password
-```python
-# json data for gurl download
-json_data = {
-        'url': jsonurl,
-        'file': jsonpath,
-        'username': 'test',
-        'password': 'test',
-    }
-```
-
-### Headers
-
-```python
-# json data for gurl download
-json_data = {
-        'url': jsonurl,
-        'file': jsonpath,
-        'additional_headers': {'Authorization': 'Basic dGVzdDp0ZXN0'},
-    }
 ```
