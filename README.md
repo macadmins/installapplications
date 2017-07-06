@@ -67,7 +67,7 @@ NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need
 #### Optional Reboot
 If after installing all of your packages, you want to force a reboot, simply uncomment the flag in the launchdaemon plist.
 ```xml
-		<string>--reboot</string>
+<string>--reboot</string>
 ```
 
 #### Basic Auth
@@ -92,8 +92,8 @@ Basic dGVzdDp0ZXN0
 In the LaunchDaemon add the following:
 
 ```xml
-		<string>--headers</string>
-    <string>Basic dGVzdDp0ZXN0</string>
+<string>--headers</string>
+<string>Basic dGVzdDp0ZXN0</string>
 ```
 
 ### Building a package
