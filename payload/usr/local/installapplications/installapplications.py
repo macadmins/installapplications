@@ -114,6 +114,7 @@ def main():
     # Options
     usage = '%prog [options]'
     o = optparse.OptionParser(usage=usage)
+    o.add_option('--headers', help=('Optional: Auth headers'))
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
@@ -143,6 +144,11 @@ def main():
             'file': jsonpath,
         }
 
+    # Grab auth headers if they exist and update the json_data dict.
+    if opts.headers:
+        headers = {'Authorization': opts.headers}
+        json_data.update({'additional_headers': headers})
+
     # Make the temporary folder
     try:
         os.makedirs(iapath)
@@ -166,6 +172,10 @@ def main():
             path = x['file']
             # Check if the file already exists and matches the expected hash.
             while not (os.path.isfile(path) and x['hash'] == gethash(path)):
+                # Check if additional headers are being passed and add them
+                # to the dictionary.
+                if opts.headers:
+                    x.update({'additional_headers': headers})
                 # Download the file once:
                 downloadfile(x)
                 # Wait half a second to process
