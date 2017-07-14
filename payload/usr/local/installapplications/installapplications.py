@@ -39,6 +39,19 @@ sys.path.append('/usr/local/installapplications')
 import gurl  # noqa
 
 
+def deplog(text):
+    depnotify = '/private/var/tmp/depnotify.log'
+    with open(depnotify, 'a+') as log:
+        log.write(text + '\n')
+
+
+def iaslog(text):
+    print(text)
+    iaslog = '/private/var/log/installapplications.log'
+    with open(iaslog, 'a+') as log:
+        log.write(text + '\n')
+
+
 def getconsoleuser():
     cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
     return cfuser[0]
@@ -84,10 +97,10 @@ def downloadfile(options):
                 if connection.percentComplete != -1:
                     if connection.percentComplete != percent_complete:
                         percent_complete = connection.percentComplete
-                        print 'Percent complete: %s' % percent_complete
+                        iaslog('Percent complete: %s ' % (percent_complete))
                 elif connection.bytesReceived != bytes_received:
                     bytes_received = connection.bytesReceived
-                    print 'Bytes received: %s' % bytes_received
+                    iaslog('Bytes received: %s ' % (bytes_received))
 
     except (KeyboardInterrupt, SystemExit):
         # safely kill the connection then fall through
@@ -99,21 +112,25 @@ def downloadfile(options):
         raise
 
     if connection.error is not None:
-        print 'Error:', (connection.error.code(),
-                         connection.error.localizedDescription())
+        iaslog('Error: %s %s ' % (str(connection.error.code()),
+                                  str(connection.error.localizedDescription()))
+               )
         if connection.SSLerror:
-            print 'SSL error:', connection.SSLerror
+            iaslog('SSL error: %s ' % (str(connection.SSLerror)))
     if connection.response is not None:
-        print 'Status:', connection.status
-        print 'Headers:', connection.headers
+        iaslog('Status: %s ' % (str(connection.status)))
+        iaslog('Headers: %s ' % (str(connection.headers)))
     if connection.redirection != []:
-        print 'Redirection:', connection.redirection
+        iaslog('Redirection: %s ' % (str(connection.redirection)))
 
 
 def main():
     # Options
     usage = '%prog [options]'
     o = optparse.OptionParser(usage=usage)
+    o.add_option('--depnotify', default=None,
+                 help=('Optional: Write our package info to DEPNotify'),
+                 action='store_true')
     o.add_option('--headers', help=('Optional: Auth headers'))
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
     o.add_option('--reboot', default=None,
@@ -128,8 +145,11 @@ def main():
             print 'InstallApplications requires root!'
             sys.exit(1)
     else:
-        print 'No URL specified!'
+        iaslog('No URL specified!')
         sys.exit(1)
+
+    # Begin logging events
+    iaslog('Beginning InstallApplications run')
 
     # installapplications variables
     iapath = '/private/tmp/installapplications'
@@ -157,16 +177,38 @@ def main():
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
+        iaslog('Downloading %s' % (json_data))
         downloadfile(json_data)
         time.sleep(0.5)
 
     # Load up file to grab all the packages.
     iajson = json.loads(open(jsonpath).read())
 
-    # Process all stages
+    # Set the stages
     stages = ['prestage', 'stage1', 'stage2']
+
+    # Get the number of packages for DEPNotify
+    if opts.depnotify:
+        numberofpackages = 0
+        for stage in stages:
+            numberofpackages += int(len(iajson[stage]))
+        deplog('Command: Determinate: %d' % (numberofpackages))
+
+    # Process all stages
     for stage in stages:
-        # Loop through the packages and download them.
+        # On Stage 1, we want to wait until we are actually in the user's
+        # session. Stage 1 is ideally used for installing files you need
+        # immediately.
+        iaslog('Beginning %s' % (stage))
+        if stage == 'stage1':
+            if len(iajson['stage1']) > 0:
+                while (getconsoleuser() is None
+                       or getconsoleuser() == u'loginwindow'
+                       or getconsoleuser() == u'_mbsetupuser'):
+                    iaslog('Detected Stage 1 - waiting for user session.')
+                    time.sleep(1)
+
+        # Loop through the packages and download/install them.
         for x in iajson[stage]:
             # Set the filepath
             path = x['file']
@@ -177,46 +219,41 @@ def main():
                 if opts.headers:
                     x.update({'additional_headers': headers})
                 # Download the file once:
+                iaslog('Downloading %s' % (x['url']))
                 downloadfile(x)
                 # Wait half a second to process
                 time.sleep(0.5)
                 # Check the files hash and redownload until it's correct.
+                # Bail after three times and log event.
+                failsleft = 3
                 while not x['hash'] == gethash(path):
+                    iaslog('Hash failed - received: %s expected: %s' % (
+                        gethash(path), x['hash']))
                     downloadfile(x)
-
-        # Now that we have validated the packages, let's get the list and
-        # ensure they are in the order we expect.
-        packagelist = []
-        for file in os.listdir(iapath):
-            if file.endswith('.pkg'):
-                packagelist.append(os.path.join(iapath, file))
-
-        packagelist = sorted(packagelist)
-
-        # On Stage 1, we want to wait until we are actually in the user's
-        # session. Stage 1 is ideally used for installing files you need
-        # immediately.
-        if stage == 'stage1':
-            if packagelist:
-                while (getconsoleuser() is None
-                       or getconsoleuser() == u"loginwindow"
-                       or getconsoleuser() == u"_mbsetupuser"):
-                    time.sleep(1)
-
-        # Time to install.
-        for packagepath in packagelist:
-            print("Installing %s" % (packagepath))
-            installpackage(packagepath)
-            try:
-                os.remove(packagepath)
-            except Exception:
-                pass
+                    failsleft -= 1
+                    if failsleft == 0:
+                        iaslog('Hash retry failed: exiting!')
+                        sys.exit(1)
+                # Time to install.
+                iaslog('Hash validated - received: %s expected: %s' % (
+                    gethash(path), x['hash']))
+                iaslog('Installing %s from %s' % (x['name'], x['file']))
+                if opts.depnotify:
+                    deplog('Status: Installing: %s' % (x['name']))
+                    deplog('Command: Notification: %s' % (x['name']))
+                # installpackage(x['file'])
 
     # Kill the launchdaemon
-    os.remove(ialdpath)
+    try:
+        os.remove(ialdpath)
+    except:  # noqa
+        pass
 
     # Kill the bootstrap path.
-    shutil.rmtree('/usr/local/installapplications')
+    try:
+        shutil.rmtree('/private/tmp/installapplications')
+    except:  # noqa
+        pass
 
     # Trigger a reboot
     if opts.reboot:
