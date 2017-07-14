@@ -241,7 +241,7 @@ def main():
                 if opts.depnotify:
                     deplog('Status: Installing: %s' % (x['name']))
                     deplog('Command: Notification: %s' % (x['name']))
-                # installpackage(x['file'])
+                installpackage(x['file'])
 
     # Kill the launchdaemon
     try:
