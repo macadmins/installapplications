@@ -64,8 +64,9 @@ def installpackage(packagepath):
         proc = subprocess.Popen(cmd, shell=False, bufsize=-1,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        output = proc.communicate()
-        return output
+        output, rcode = proc.communicate(), proc.returncode
+        iaslog('Installer Logs: %s' % output[0])
+        return rcode
     except Exception:
         pass
 
@@ -210,11 +211,11 @@ def main():
 
         # Loop through the packages and download/install them.
         for package in iajson[stage]:
-            # Set the filepath
-            path = x['file']
+            # Set the filepath and hash
+            path = package['file']
+            hash = package['hash']
             # Check if the file already exists and matches the expected hash.
-            while not (os.path.isfile(path) and package['hash'] == gethash(path
-                                                                           )):
+            while not (os.path.isfile(path) and hash == gethash(path)):
                 # Check if additional headers are being passed and add them
                 # to the dictionary.
                 if opts.headers:
@@ -243,7 +244,9 @@ def main():
                 if opts.depnotify:
                     deplog('Status: Installing: %s' % (package['name']))
                     deplog('Command: Notification: %s' % (package['name']))
-                installpackage(package['file'])
+                installerstatus = installpackage(package['file'])
+                if installerstatus == 0:
+                    break
 
     # Kill the launchdaemon
     try:
