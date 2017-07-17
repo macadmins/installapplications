@@ -209,39 +209,41 @@ def main():
                     time.sleep(1)
 
         # Loop through the packages and download/install them.
-        for x in iajson[stage]:
+        for package in iajson[stage]:
             # Set the filepath
             path = x['file']
             # Check if the file already exists and matches the expected hash.
-            while not (os.path.isfile(path) and x['hash'] == gethash(path)):
+            while not (os.path.isfile(path) and package['hash'] == gethash(path
+                                                                           )):
                 # Check if additional headers are being passed and add them
                 # to the dictionary.
                 if opts.headers:
-                    x.update({'additional_headers': headers})
+                    package.update({'additional_headers': headers})
                 # Download the file once:
-                iaslog('Downloading %s' % (x['url']))
-                downloadfile(x)
+                iaslog('Downloading %s' % (package['url']))
+                downloadfile(package)
                 # Wait half a second to process
                 time.sleep(0.5)
                 # Check the files hash and redownload until it's correct.
                 # Bail after three times and log event.
                 failsleft = 3
-                while not x['hash'] == gethash(path):
+                while not package['hash'] == gethash(path):
                     iaslog('Hash failed - received: %s expected: %s' % (
-                        gethash(path), x['hash']))
-                    downloadfile(x)
+                        gethash(path), package['hash']))
+                    downloadfile(package)
                     failsleft -= 1
                     if failsleft == 0:
                         iaslog('Hash retry failed: exiting!')
                         sys.exit(1)
                 # Time to install.
                 iaslog('Hash validated - received: %s expected: %s' % (
-                    gethash(path), x['hash']))
-                iaslog('Installing %s from %s' % (x['name'], x['file']))
+                    gethash(path), package['hash']))
+                iaslog('Installing %s from %s' % (package['name'],
+                                                  package['file']))
                 if opts.depnotify:
-                    deplog('Status: Installing: %s' % (x['name']))
-                    deplog('Command: Notification: %s' % (x['name']))
-                installpackage(x['file'])
+                    deplog('Status: Installing: %s' % (package['name']))
+                    deplog('Command: Notification: %s' % (package['name']))
+                installpackage(package['file'])
 
     # Kill the launchdaemon
     try:
