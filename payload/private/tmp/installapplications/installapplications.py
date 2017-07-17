@@ -25,6 +25,7 @@
 # https://github.com/munki/munki
 # Notice a pattern?
 
+from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import hashlib
 import json
@@ -48,6 +49,7 @@ def deplog(text):
 def iaslog(text):
     print(text)
     iaslog = '/private/var/log/installapplications.log'
+    NSLog('[InstallApplications] ' + text)
     with open(iaslog, 'a+') as log:
         log.write(text + '\n')
 
