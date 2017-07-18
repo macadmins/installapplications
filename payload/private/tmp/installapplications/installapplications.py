@@ -197,9 +197,9 @@ def main():
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if ('Reboot:' in notification or
-                'Command: Quit' in notification or
+            if ('Command: Quit' in notification or
                 'Command: Restart' in notification or
+                'DEPNotifyPath:' in notification or
                     'Command: LogoutNow' in notification):
                 continue
             else:
@@ -259,7 +259,10 @@ def main():
     if opts.depnotify:
         numberofpackages = 0
         for stage in stages:
-            numberofpackages += int(len(iajson[stage]))
+            if stage == 'prestage':
+                iaslog('Skipping DEPNotify package countdue to prestage.')
+            else:
+                numberofpackages += int(len(iajson[stage]))
         # Mulitply by two for download and installation status messages
         deplog('Command: Determinate: %d' % (numberofpackages*2))
 
@@ -280,7 +283,11 @@ def main():
                 # Download the file once:
                 iaslog('Starting download: %s' % (package['url']))
                 if opts.depnotify:
-                    deplog('Status: Downloading %s' % (package['name']))
+                    if stage == 'prestage':
+                        iaslog(
+                            'Skipping DEPNotify notification due to prestage.')
+                    else:
+                        deplog('Status: Downloading %s' % (package['name']))
                 downloadfile(package)
                 # Wait half a second to process
                 time.sleep(0.5)
@@ -310,10 +317,24 @@ def main():
                             iaslog('Detected Stage 1 - delaying install until \
                                    user session.')
                             time.sleep(1)
+                    # Open DEPNotify for the admin if they pass a condition.
+                    if opts.depnotify:
+                        for varg in opts.depnotify:
+                            notification = str(varg)
+                            if 'DEPNotifyPath:' in notification:
+                                depnotifypath = notification.split(' ')[-1]
+                                subprocess.call(['/usr/bin/open',
+                                                 depnotifypath])
+                            else:
+                                continue
                 iaslog('Installing %s from %s' % (package['name'], path))
                 if opts.depnotify:
-                    deplog('Status: Installing: %s' % (package['name']))
-                    deplog('Command: Notification: %s' % (package['name']))
+                    if stage == 'prestage':
+                        iaslog(
+                            'Skipping DEPNotify notification due to prestage.')
+                    else:
+                        deplog('Status: Installing: %s' % (package['name']))
+                        deplog('Command: Notification: %s' % (package['name']))
                 # We now check the install return code status since some
                 # packages like to delete themselves after they run. Why would
                 # you do this developers? Palo Alto Networks / GlobalProtect
