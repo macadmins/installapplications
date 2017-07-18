@@ -134,6 +134,9 @@ You can pass unlimited options to DEPNotify that will allow you to set it's vari
 
 For a list of all DEPNotify options, please go [here](https://gitlab.com/Mactroll/DEPNotify).
 
+### Logging
+All actions are logged at `/private/var/log/installapplications.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
+
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 
