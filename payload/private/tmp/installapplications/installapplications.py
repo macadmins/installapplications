@@ -277,10 +277,12 @@ def main():
                             time.sleep(1)
                 iaslog('Installing %s from %s' % (package['name'], path))
                 if opts.depnotify:
-                    deplog('Status: Installing %s' % (package['name']))
-                if opts.usernotif:
+                    deplog('Status: Installing: %s' % (package['name']))
                     deplog('Command: Notification: %s' % (package['name']))
-                installerstatus = installpackage(path)
+                # We now check the install return code status since some
+                # packages like to delete themselves after they run. Why would
+                # you do this developers? Palo Alto Networks / GlobalProtect
+                installerstatus = installpackage(package['file'])
                 if installerstatus == 0:
                     break
 
@@ -296,16 +298,8 @@ def main():
     except:  # noqa
         pass
 
-    if opts.reboot and opts.depnotify:
-        deplog('Status: Complete! Rebooting machine in 10 seconds')
-        time.sleep(10)
+    if opts.reboot:
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
-    elif opts.reboot and not opts.depnotify:
-        subprocess.call(['/sbin/shutdown', '-r', 'now'])
-    elif opts.depnotify and not opts.reboot:
-        deplog('Status: Complete! Exiting in 10 seconds')
-        time.sleep(10)
-        deplog('Command: Quit')
 
 
 if __name__ == '__main__':
