@@ -96,6 +96,44 @@ In the LaunchDaemon add the following:
 <string>Basic dGVzdDp0ZXN0</string>
 ```
 
+### DEPNotify
+InstallApplications can work in conjunction with DEPNotify to automatically create and manipulate the progress bar.
+
+InstallApplications will do the following automatically:
+ - Determine the progress bar based on the amount of packages in the json (excluding prestage)
+
+#### Notes about argument behavior
+If you would like to pass more options to DEPNotify, simply pass string arguments exactly as they would be passed to DEPNotify. The `--depnotify` option can be passed an *unlimited* amount of arguments.
+
+```python
+installapplications.py --depnotify "Command: WindowTitle: InstallApplications is Awesome!" "Command: Quit: Thanks for using InstallApplications and DEPNotify!"
+```
+
+If you pass arguments for `Quit` or `Restart`, InstallApplications will ignore these commands until the end of the run.
+
+#### Opening DEPNotify with InstallApplications
+If you would like to open DEPNotify, simply pass the `DEPNotifyPath:` argument to the `--depnotify` option.
+
+```python
+installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app"
+```
+
+InstallApplications will wait until `stage1` to open DEPNotify as the `prestage` is used for SetupAssistant.
+
+#### DEPNotify LaunchDaemon
+You can pass unlimited options to DEPNotify that will allow you to set it's various options.
+
+```xml
+<string>--depnotify</string>
+<string>Command: WindowTitle: InstallApplications is Awesome!</string>
+<string>Command: NotificationOn:</string>
+<string>Command: Quit: Thanks for using InstallApplications and DEPNotify!</string>
+<string>Command: WindowStyle: ActivateOnStep</string>
+<string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string>
+```
+
+For a list of all DEPNotify options, please go [here](https://gitlab.com/Mactroll/DEPNotify).
+
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 

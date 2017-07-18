@@ -10,6 +10,12 @@
 		<string>/private/tmp/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
+		<!-- <string>--depnotify</string> -->
+		<!-- <string>Command: WindowTitle: InstallApplications is Awesome!</string> -->
+		<!-- <string>Command: NotificationOn:</string> -->
+		<!-- <string>Command: Quit: Thanks for using InstallApplications and DEPNotify.</string> -->
+		<!-- <string>Command: WindowStyle: ActivateOnStep</string> -->
+		<!-- <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string> -->
 		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
