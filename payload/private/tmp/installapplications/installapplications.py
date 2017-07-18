@@ -67,7 +67,14 @@ def installpackage(packagepath):
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         output, rcode = proc.communicate(), proc.returncode
-        iaslog('Installer Logs: %s' % output[0])
+        installlog = output[0].split('\n')
+        # Filter all blank lines after the split.
+        for line in filter(None, installlog):
+            # Replace any instances of % with a space and any elipsis with
+            # a blank line since NSLog can't handle these kinds of characters.
+            # Hopefully this is the only bad characters we will ever run into.
+            logline = line.replace('%', ' ').replace('\xe2\x80\xa6', '')
+            iaslog(logline)
         return rcode
     except Exception:
         pass
@@ -246,6 +253,9 @@ def main():
                 if opts.depnotify:
                     deplog('Status: Installing: %s' % (package['name']))
                     deplog('Command: Notification: %s' % (package['name']))
+                # We now check the install return code status since some
+                # packages like to delete themselves after they run. Why would
+                # you do this developers? Palo Alto Networks / GlobalProtect
                 installerstatus = installpackage(package['file'])
                 if installerstatus == 0:
                     break
