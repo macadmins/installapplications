@@ -3,8 +3,9 @@
 
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
-## Supported MDMs
+## MDM's that support Custom DEP
 - AirWatch
+- FileWave (please contact them for instructions)
 - MicroMDM
 - SimpleMDM
 
