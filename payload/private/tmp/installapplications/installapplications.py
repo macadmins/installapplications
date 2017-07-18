@@ -31,6 +31,7 @@ import hashlib
 import json
 import optparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -48,8 +49,8 @@ def deplog(text):
 
 def iaslog(text):
     print(text)
-    iaslog = '/private/var/log/installapplications.log'
     NSLog('[InstallApplications] ' + text)
+    iaslog = '/private/var/log/installapplications.log'
     with open(iaslog, 'a+') as log:
         log.write(text + '\n')
 
@@ -57,6 +58,15 @@ def iaslog(text):
 def getconsoleuser():
     cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
     return cfuser[0]
+
+
+def pkgregex(pkgpath):
+    try:
+        # capture everything after last / in the pkg filepath
+        pkgname = re.compile(r"[^/]+$").search(pkgpath).group(0)
+        return pkgname
+    except AttributeError, IndexError:
+        return packagepath
 
 
 def installpackage(packagepath):
@@ -101,16 +111,25 @@ def downloadfile(options):
     bytes_received = 0
     connection.start()
     try:
+        filename = options['name']
+    except KeyError:
+        iaslog('No \'name\' key defined in json for %s' %
+               pkgregex(options['file']))
+        sys.exit(1)
+
+    try:
         while not connection.isDone():
             if connection.destination_path:
                 # only print progress info if we are writing to a file
                 if connection.percentComplete != -1:
                     if connection.percentComplete != percent_complete:
                         percent_complete = connection.percentComplete
-                        iaslog('Percent complete: %s ' % (percent_complete))
+                        iaslog('Downloading %s - Percent complete: %s ' % (
+                               filename, percent_complete))
                 elif connection.bytesReceived != bytes_received:
                     bytes_received = connection.bytesReceived
-                    iaslog('Bytes received: %s ' % (bytes_received))
+                    iaslog('Downloading %s - Bytes received: %s ' % (
+                           filename, bytes_received))
 
     except (KeyboardInterrupt, SystemExit):
         # safely kill the connection then fall through
@@ -184,7 +203,7 @@ def main():
             print 'InstallApplications requires root!'
             sys.exit(1)
     else:
-        iaslog('No URL specified!')
+        iaslog('No JSON URL specified!')
         sys.exit(1)
 
     # Begin logging events
@@ -201,6 +220,7 @@ def main():
     json_data = {
             'url': jsonurl,
             'file': jsonpath,
+            'name': 'Bootstrap.json'
         }
 
     # Grab auth headers if they exist and update the json_data dict.
@@ -216,7 +236,7 @@ def main():
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
-        iaslog('Downloading %s' % (json_data))
+        iaslog('Starting download: %s' % (json_data['url']))
         downloadfile(json_data)
         time.sleep(0.5)
 
@@ -231,22 +251,12 @@ def main():
         numberofpackages = 0
         for stage in stages:
             numberofpackages += int(len(iajson[stage]))
-        deplog('Command: Determinate: %d' % (numberofpackages))
+        # Mulitply by two for download and installation status messages
+        deplog('Command: Determinate: %d' % (numberofpackages*2))
 
     # Process all stages
     for stage in stages:
-        # On Stage 1, we want to wait until we are actually in the user's
-        # session. Stage 1 is ideally used for installing files you need
-        # immediately.
         iaslog('Beginning %s' % (stage))
-        if stage == 'stage1':
-            if len(iajson['stage1']) > 0:
-                while (getconsoleuser() is None
-                       or getconsoleuser() == u'loginwindow'
-                       or getconsoleuser() == u'_mbsetupuser'):
-                    iaslog('Detected Stage 1 - waiting for user session.')
-                    time.sleep(1)
-
         # Loop through the packages and download/install them.
         for package in iajson[stage]:
             # Set the filepath and hash
@@ -259,26 +269,39 @@ def main():
                 if opts.headers:
                     package.update({'additional_headers': headers})
                 # Download the file once:
-                iaslog('Downloading %s' % (package['url']))
+                iaslog('Starting download: %s' % (package['url']))
+                if opts.depnotify:
+                    deplog('Status: Downloading %s' % (package['name']))
                 downloadfile(package)
                 # Wait half a second to process
                 time.sleep(0.5)
                 # Check the files hash and redownload until it's correct.
                 # Bail after three times and log event.
                 failsleft = 3
-                while not package['hash'] == gethash(path):
-                    iaslog('Hash failed - received: %s expected: %s' % (
-                        gethash(path), package['hash']))
+                while not hash == gethash(path):
+                    iaslog('Hash failed for %s - received: %s expected: %s' % (
+                           package['name'], gethash(path), hash))
                     downloadfile(package)
                     failsleft -= 1
                     if failsleft == 0:
-                        iaslog('Hash retry failed: exiting!')
+                        iaslog('Hash retry failed for %s: exiting!' %
+                               package['name'])
                         sys.exit(1)
                 # Time to install.
                 iaslog('Hash validated - received: %s expected: %s' % (
-                    gethash(path), package['hash']))
-                iaslog('Installing %s from %s' % (package['name'],
-                                                  package['file']))
+                       gethash(path), hash))
+                # On Stage 1, we want to wait until we are actually in the
+                # user's session. Stage 1 is ideally used for installing files
+                # you need immediately.
+                if stage == 'stage1':
+                    if len(iajson['stage1']) > 0:
+                        while (getconsoleuser() is None
+                               or getconsoleuser() == u'loginwindow'
+                               or getconsoleuser() == u'_mbsetupuser'):
+                            iaslog('Detected Stage 1 - delaying install until \
+                                   user session.')
+                            time.sleep(1)
+                iaslog('Installing %s from %s' % (package['name'], path))
                 if opts.depnotify:
                     deplog('Status: Installing: %s' % (package['name']))
                     deplog('Command: Notification: %s' % (package['name']))

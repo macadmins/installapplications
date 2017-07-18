@@ -5,8 +5,8 @@
 # Usage: python generatejson.py --rootdir /path/to/rootdir
 #
 # --rootdir path is the directory that contains each stage's pkgs directory
-# As of InstallApplications 5/13/17, the directories must be named (lowercase):
-#   'prestage', 'stage1', and 'stage3'
+# As of InstallApplications 7/18/17, the directories must be named (lowercase):
+#   'prestage', 'stage1', and 'stage2'
 #
 # The generated Json will be saved in the root directory
 # Future plan for this tool is to add AWS S3 integration for auto-upload
@@ -19,7 +19,6 @@ import sys
 
 
 def gethash(filename):
-    # Credit to Erik Gomez
     hash_function = hashlib.sha256()
     if not os.path.isfile(filename):
         return 'NOT A FILE'
@@ -39,6 +38,8 @@ def main():
     op = optparse.OptionParser(usage=usage)
     op.add_option('--rootdir', help=(
         'Required: Root directory path for InstallApplications stages'))
+    op.add_option('--outputdir', default=None, help=('Optional: Output \
+                  directory to save in. Default saves in the rootdir'))
     opts, args = op.parse_args()
 
     if opts.rootdir:
@@ -59,17 +60,25 @@ def main():
                 filehash = gethash(filepath)
                 filestage = os.path.basename(os.path.abspath(
                             os.path.join(filepath, os.pardir)))
-                filejson = {"file":
-                            "/private/tmp/installapplications/%s" % filename,
-                            "url": "", "hash": str(filehash)}
+                filejson = {'file':
+                            '/private/tmp/installapplications/%s' % filename,
+                            'url': '', 'hash': str(filehash), 'name': filename}
                 stages[filestage].append(filejson)
 
     # Saving the file back in the root dir
-    savepath = os.path.join(rootdir, "bootstrap.json")
-    with open(savepath, 'w') as outfile:
-        json.dump(stages, outfile, sort_keys=True, indent=2)
+    if opts.outputdir:
+        savepath = os.path.join(opts.outputdir, 'bootstrap.json')
+    else:
+        savepath = os.path.join(rootdir, 'bootstrap.json')
 
-    print "Json saved to %s" % savepath
+    try:
+        with open(savepath, 'w') as outfile:
+            json.dump(stages, outfile, sort_keys=True, indent=2)
+    except IOError:
+        print '[Error] Not a valid directory: %s' % savepath
+        sys.exit(1)
+
+    print 'Json saved to %s' % savepath
 
 
 if __name__ == '__main__':
