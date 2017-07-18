@@ -40,7 +40,7 @@ There are currently three stages of packages:
 By utilizing prestage/stage1, you can have **almost instant UI notifications** for your users.
 
 ## Notes
-- InstallApplications will only begin stage1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
+- InstallApplications will only begin installing stage1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
 
 ### Signing
 You will **NEED** to sign this package for use with DEP/MDM. To acquire a signing certificate, join the [Apple Developers Program](https://developer.apple.com).
@@ -113,6 +113,7 @@ The JSON structure is quite simple. You supply the following:
 - filepath (currently hardcoded to `/private/tmp/installapplications`)
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
+- name (define a name for the package, for debug logging and DEPNotify)
 
 The following is an example JSON:
 ```json
@@ -121,21 +122,24 @@ The following is an example JSON:
     {
       "file": "/private/tmp/installapplications/prestage.pkg",
       "url": "https://domain.tld/prestage.pkg",
-      "hash": "sha256 hash"
+      "hash": "sha256 hash",
+      "name": "PreStage Package Name"
     }
   ],
   "stage1": [
     {
       "file": "/private/tmp/installapplications/stage1.pkg",
       "url": "https://domain.tld/stage1.pkg",
-      "hash": "sha256 hash"
+      "hash": "sha256 hash",
+      "name": "Stage 1 Package Name"
     }
   ],
   "stage2": [
     {
       "file": "/private/tmp/installapplications/stage2.pkg",
       "url": "https://domain.tld/stage2.pkg",
-      "hash": "sha256 hash"
+      "hash": "sha256 hash",
+      "name": "Stage 2 Package Name"
     }
   ]
 }
@@ -145,17 +149,27 @@ URLs should not be subject to redirection, or there may be unintended behavior. 
 
 You may have more than one package in each stage. Packages will be deployed in alphabetical order, not listed order, so if you want packages installed in a certain order, begin their file names with 1-, 2-, 3- as the case may be.
 
-Using `generatejson.py` you can automatically generate the json with the file and hash keys populated.
+### Creating your JSON
+
+Using `generatejson.py` you can automatically generate the json with the file, hash, and name keys populated (you'll need to upload the packages to a server and update the url keys).
 In order to do this, simply organize your packages in lowercase directories in a "root directory" as shown below:
 ```
 .
 ├── rootdir
 │   ├── prestage
+│   │   └── prestage.pkg
 │   ├── stage1
+│   │   └── stage1.pkg
 │   └── stage2
+│   │   └── stage2_1.pkg
+│   │   └── stage2_2.pkg
 ```
 
 Then run the tool:
 ```
 python generatejson.py --rootdir /path/to/rootdir
+```
+The bootstrap.json will be saved in the rootdir. If you want to save it elsewhere, use `--outputdir`:
+```
+python generatejson.py --rootdir /path/to/rootdir --outputdir /path/to/outputdir
 ```
