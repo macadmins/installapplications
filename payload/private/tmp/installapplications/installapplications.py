@@ -295,6 +295,7 @@ def main():
     except:  # noqa
         pass
 
+    # Trigger a reboot
     if opts.reboot:
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
 
