@@ -354,6 +354,19 @@ def main():
     except:  # noqa
         pass
 
+    # Trigger the final DEPNotify events
+    if opts.depnotify:
+        for varg in opts.depnotify:
+            notification = str(varg)
+            if ('Command: Quit' in notification or
+                'Command: Restart' in notification or
+                'DEPNotifyPath:' in notification or
+                    'Command: LogoutNow' in notification):
+                deplog(notification)
+            else:
+                iaslog(
+                    'Skipping DEPNotify notification event due to completion.')
+
     # Trigger a reboot
     if opts.reboot:
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
