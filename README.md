@@ -105,7 +105,7 @@ InstallApplications will do the following automatically:
 #### Notes about argument behavior
 If you would like to pass more options to DEPNotify, simply pass string arguments exactly as they would be passed to DEPNotify. The `--depnotify` option can be passed an *unlimited* amount of arguments.
 
-```python
+```
 installapplications.py --depnotify "Command: WindowTitle: InstallApplications is Awesome!" "Command: Quit: Thanks for using InstallApplications and DEPNotify!"
 ```
 
@@ -114,7 +114,7 @@ If you pass arguments for `Quit` or `Restart`, InstallApplications will ignore t
 #### Opening DEPNotify with InstallApplications
 If you would like to open DEPNotify, simply pass the `DEPNotifyPath:` argument to the `--depnotify` option.
 
-```python
+```
 installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app"
 ```
 
