@@ -134,19 +134,48 @@ def downloadfile(options):
         iaslog('Redirection: %s ' % (str(connection.redirection)))
 
 
+def vararg_callback(option, opt_str, value, parser):
+    # https://docs.python.org/3/library/optparse.html#callback-example-6-
+    # variable-arguments
+    assert value is None
+    value = []
+
+    def floatable(str):
+        try:
+            float(str)
+            return True
+        except ValueError:
+            return False
+
+    for arg in parser.rargs:
+        # stop on --foo like options
+        if arg[:2] == "--" and len(arg) > 2:
+            break
+        value.append(arg)
+
+    del parser.rargs[:len(value)]
+    setattr(parser.values, option.dest, value)
+
+
 def main():
     # Options
     usage = '%prog [options]'
     o = optparse.OptionParser(usage=usage)
     o.add_option('--depnotify', default=None,
-                 help=('Optional: Write our package info to DEPNotify'),
-                 action='store_true')
+                 dest="depnotify",
+                 action="callback",
+                 callback=vararg_callback,
+                 help=('Optional: Utilize DEPNotify and pass options to it.'))
     o.add_option('--headers', help=('Optional: Auth headers'))
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
 
     opts, args = o.parse_args()
+
+    if opts.depnotify:
+        for varg in opts.depnotify:
+            deplog(str(varg))
 
     # Check for root and json url.
     if opts.jsonurl:
