@@ -192,9 +192,18 @@ def main():
 
     opts, args = o.parse_args()
 
+    # Look for all the DEPNotify options but skip the ones that are usual
+    # done after a full run.
     if opts.depnotify:
         for varg in opts.depnotify:
-            deplog(str(varg))
+            notification = str(varg)
+            if ('Reboot:' in notification or
+                'Command: Quit' in notification or
+                'Command: Restart' in notification or
+                    'Command: LogoutNow' in notification):
+                continue
+            else:
+                deplog(notification)
 
     # Check for root and json url.
     if opts.jsonurl:
