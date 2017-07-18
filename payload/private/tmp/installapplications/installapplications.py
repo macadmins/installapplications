@@ -164,9 +164,6 @@ def main():
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
-    o.add_option('--usernotif', default=None,
-                 help=('Optional: Send a user notification via DEPNotify'),
-                 action='store_true')
 
     opts, args = o.parse_args()
 
