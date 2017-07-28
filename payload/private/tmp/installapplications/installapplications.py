@@ -192,15 +192,16 @@ def main():
 
     opts, args = o.parse_args()
 
+    # DEPNotify trigger commands that need to happen at the end of a run
+    deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
+                   'DEPNotifyPath']
+
     # Look for all the DEPNotify options but skip the ones that are usual
     # done after a full run.
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if ('Command: Quit' in notification or
-                'Command: Restart' in notification or
-                'DEPNotifyPath:' in notification or
-                    'Command: LogoutNow' in notification):
+            if any(x in notification for x in deptriggers):
                 continue
             else:
                 deplog(notification)
@@ -358,10 +359,7 @@ def main():
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if ('Command: Quit' in notification or
-                'Command: Restart' in notification or
-                'DEPNotifyPath:' in notification or
-                    'Command: LogoutNow' in notification):
+            if any(x in notification for x in deptriggers):
                 deplog(notification)
             else:
                 iaslog(
