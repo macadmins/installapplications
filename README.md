@@ -156,6 +156,8 @@ The JSON structure is quite simple. You supply the following:
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
 - name (define a name for the package, for debug logging and DEPNotify)
+- version of package (to check package receipts)
+- package id (to check for package receipts)
 
 The following is an example JSON:
 ```json
@@ -164,6 +166,8 @@ The following is an example JSON:
     {
       "file": "/private/tmp/installapplications/prestage.pkg",
       "url": "https://domain.tld/prestage.pkg",
+      "packageid": "com.package.prestage",
+      "version": "1.0",
       "hash": "sha256 hash",
       "name": "PreStage Package Name"
     }
@@ -172,6 +176,8 @@ The following is an example JSON:
     {
       "file": "/private/tmp/installapplications/stage1.pkg",
       "url": "https://domain.tld/stage1.pkg",
+      "packageid": "com.package.stage1",
+      "version": "1.0",
       "hash": "sha256 hash",
       "name": "Stage 1 Package Name"
     }
@@ -180,6 +186,8 @@ The following is an example JSON:
     {
       "file": "/private/tmp/installapplications/stage2.pkg",
       "url": "https://domain.tld/stage2.pkg",
+      "packageid": "com.package.stage2",
+      "version": "1.0",
       "hash": "sha256 hash",
       "name": "Stage 2 Package Name"
     }
