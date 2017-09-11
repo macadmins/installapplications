@@ -91,6 +91,24 @@ def installpackage(packagepath):
         pass
 
 
+def checkreceipt(packageid):
+    try:
+        cmd = ['/usr/sbin/pkgutil', '--pkg-info-plist', packageid]
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = proc.communicate()
+        receiptout = output[0]
+        if receiptout:
+            plist = plistlib.readPlistFromString(receiptout)
+            version = plist['pkg-version']
+        else:
+            version = '0.0.0.0.0'
+        return version
+    except Exception:
+        version = '0.0.0.0.0'
+        return version
+
+
 def gethash(filename):
     hash_function = hashlib.sha256()
     if not os.path.isfile(filename):
