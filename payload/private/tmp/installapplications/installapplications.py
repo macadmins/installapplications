@@ -25,12 +25,14 @@
 # https://github.com/munki/munki
 # Notice a pattern?
 
+from distutils.version import LooseVersion
 from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import hashlib
 import json
 import optparse
 import os
+import plistlib
 import re
 import shutil
 import subprocess
