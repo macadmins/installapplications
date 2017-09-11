@@ -294,73 +294,82 @@ def main():
             # Set the filepath and hash
             path = package['file']
             hash = package['hash']
-            # Check if the file already exists and matches the expected hash.
-            while not (os.path.isfile(path) and hash == gethash(path)):
-                # Check if additional headers are being passed and add them
-                # to the dictionary.
-                if opts.headers:
-                    package.update({'additional_headers': headers})
-                # Download the file once:
-                iaslog('Starting download: %s' % (package['url']))
-                if opts.depnotify:
-                    if stage == 'prestage':
-                        iaslog(
-                            'Skipping DEPNotify notification due to prestage.')
-                    else:
-                        deplog('Status: Downloading %s' % (package['name']))
-                downloadfile(package)
-                # Wait half a second to process
-                time.sleep(0.5)
-                # Check the files hash and redownload until it's correct.
-                # Bail after three times and log event.
-                failsleft = 3
-                while not hash == gethash(path):
-                    iaslog('Hash failed for %s - received: %s expected: %s' % (
-                           package['name'], gethash(path), hash))
-                    downloadfile(package)
-                    failsleft -= 1
-                    if failsleft == 0:
-                        iaslog('Hash retry failed for %s: exiting!' %
-                               package['name'])
-                        sys.exit(1)
-                # Time to install.
-                iaslog('Hash validated - received: %s expected: %s' % (
-                       gethash(path), hash))
-                # On Stage 1, we want to wait until we are actually in the
-                # user's session. Stage 1 is ideally used for installing files
-                # you need immediately.
-                if stage == 'stage1':
-                    if len(iajson['stage1']) > 0:
-                        while (getconsoleuser() is None
-                               or getconsoleuser() == u'loginwindow'
-                               or getconsoleuser() == u'_mbsetupuser'):
-                            iaslog('Detected Stage 1 - delaying install until \
-                                   user session.')
-                            time.sleep(1)
-                    # Open DEPNotify for the admin if they pass a condition.
+            name = package['name']
+            packageid = package['packageid']
+            version = package['version']
+            # Compare version of pacakge with installed version
+            if LooseVersion(checkreceipt(packageid)) >= LooseVersion(version):
+                iaslog('Skipping %s - already installed.' % (name))
+            else:
+                # Check if the file exists and matches the expected hash.
+                while not (os.path.isfile(path) and hash == gethash(path)):
+                    # Check if additional headers are being passed and add them
+                    # to the dictionary.
+                    if opts.headers:
+                        package.update({'additional_headers': headers})
+                    # Download the file once:
+                    iaslog('Starting download: %s' % (package['url']))
                     if opts.depnotify:
-                        for varg in opts.depnotify:
-                            notification = str(varg)
-                            if 'DEPNotifyPath:' in notification:
-                                depnotifypath = notification.split(' ')[-1]
-                                subprocess.call(['/usr/bin/open',
-                                                 depnotifypath])
-                            else:
-                                continue
-                iaslog('Installing %s from %s' % (package['name'], path))
-                if opts.depnotify:
-                    if stage == 'prestage':
-                        iaslog(
-                            'Skipping DEPNotify notification due to prestage.')
-                    else:
-                        deplog('Status: Installing: %s' % (package['name']))
-                        deplog('Command: Notification: %s' % (package['name']))
-                # We now check the install return code status since some
-                # packages like to delete themselves after they run. Why would
-                # you do this developers? Palo Alto Networks / GlobalProtect
-                installerstatus = installpackage(package['file'])
-                if installerstatus == 0:
-                    break
+                        if stage == 'prestage':
+                            iaslog(
+                                'Skipping DEPNotify notification due to \
+                                prestage.')
+                        else:
+                            deplog('Status: Downloading %s' % (name))
+                    downloadfile(package)
+                    # Wait half a second to process
+                    time.sleep(0.5)
+                    # Check the files hash and redownload until it's correct.
+                    # Bail after three times and log event.
+                    failsleft = 3
+                    while not hash == gethash(path):
+                        iaslog('Hash failed for %s - received: %s expected: \
+                               %s' % (name, gethash(path), hash))
+                        downloadfile(package)
+                        failsleft -= 1
+                        if failsleft == 0:
+                            iaslog('Hash retry failed for %s: exiting!' % name)
+                            sys.exit(1)
+                    # Time to install.
+                    iaslog('Hash validated - received: %s expected: %s' % (
+                           gethash(path), hash))
+                    # On Stage 1, we want to wait until we are actually in the
+                    # user's session. Stage 1 is ideally used for installing
+                    # files you need immediately.
+                    if stage == 'stage1':
+                        if len(iajson['stage1']) > 0:
+                            while (getconsoleuser() is None
+                                   or getconsoleuser() == u'loginwindow'
+                                   or getconsoleuser() == u'_mbsetupuser'):
+                                iaslog('Detected Stage 1 - delaying install \
+                                       until user session.')
+                                time.sleep(1)
+                        # Open DEPNotify for the admin if they pass condition.
+                        if opts.depnotify:
+                            for varg in opts.depnotify:
+                                notification = str(varg)
+                                if 'DEPNotifyPath:' in notification:
+                                    depnotifypath = notification.split(' ')[-1]
+                                    subprocess.call(['/usr/bin/open',
+                                                     depnotifypath])
+                                else:
+                                    continue
+                    iaslog('Installing %s from %s' % (name, path))
+                    if opts.depnotify:
+                        if stage == 'prestage':
+                            iaslog(
+                                'Skipping DEPNotify notification due to \
+                                prestage.')
+                        else:
+                            deplog('Status: Installing: %s' % (name))
+                            deplog('Command: Notification: %s' % (name))
+                    # We now check the install return code status since some
+                    # packages like to delete themselves after they run. Why
+                    # would you do this developers?
+                    # Palo Alto Networks / GlobalProtect
+                    installerstatus = installpackage(package['file'])
+                    if installerstatus == 0:
+                        break
 
     # Kill the launchdaemon
     try:
