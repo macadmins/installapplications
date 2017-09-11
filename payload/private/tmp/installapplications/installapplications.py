@@ -51,8 +51,9 @@ def iaslog(text):
     print(text)
     NSLog('[InstallApplications] ' + text)
     iaslog = '/private/var/log/installapplications.log'
+    formatstr = '%b %d %Y %H:%M:%S %z: '
     with open(iaslog, 'a+') as log:
-        log.write(text + '\n')
+        log.write(time.strftime(formatstr) + text + '\n')
 
 
 def getconsoleuser():
