@@ -63,7 +63,7 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 <string>https://domain.tld</string>
 ```
 
-NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the variable `ialdpath` in installapplications.py, as well as in the `launchctld` call in the postinstall script.
+NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the variable `ialdpath` in installapplications.py, the `launchctld` call in the postinstall script, and the `launchctl` function call in installapplications.py.
 
 #### Optional Reboot
 If after installing all of your packages, you want to force a reboot, simply uncomment the flag in the launchdaemon plist.
@@ -156,6 +156,9 @@ The JSON structure is quite simple. You supply the following:
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
 - name (define a name for the package, for debug logging and DEPNotify)
+- version of package (to check package receipts)
+- package id (to check for package receipts)
+- type of package (currently `rootscript` or `package`)
 
 The following is an example JSON:
 ```json
@@ -164,24 +167,38 @@ The following is an example JSON:
     {
       "file": "/private/tmp/installapplications/prestage.pkg",
       "url": "https://domain.tld/prestage.pkg",
+      "packageid": "com.package.prestage",
+      "version": "1.0",
       "hash": "sha256 hash",
-      "name": "PreStage Package Name"
+      "name": "PreStage Package Name",
+      "type": "package"
     }
   ],
   "stage1": [
     {
       "file": "/private/tmp/installapplications/stage1.pkg",
       "url": "https://domain.tld/stage1.pkg",
+      "packageid": "com.package.stage1",
+      "version": "1.0",
       "hash": "sha256 hash",
-      "name": "Stage 1 Package Name"
-    }
+      "name": "Stage 1 Package Name",
+      "type": "package"
+    },
+    {
+      "file": "/private/tmp/installapplications/stage1_examplescript.py",
+      "name": "Example Script",
+      "type": "rootscript"
+    },
   ],
   "stage2": [
     {
       "file": "/private/tmp/installapplications/stage2.pkg",
       "url": "https://domain.tld/stage2.pkg",
+      "packageid": "com.package.stage2",
+      "version": "1.0",
       "hash": "sha256 hash",
-      "name": "Stage 2 Package Name"
+      "name": "Stage 2 Package Name",
+      "type": "package"
     }
   ]
 }

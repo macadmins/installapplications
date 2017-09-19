@@ -25,12 +25,14 @@
 # https://github.com/munki/munki
 # Notice a pattern?
 
+from distutils.version import LooseVersion
 from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import hashlib
 import json
 import optparse
 import os
+import plistlib
 import re
 import shutil
 import subprocess
@@ -51,8 +53,9 @@ def iaslog(text):
     print(text)
     NSLog('[InstallApplications] ' + text)
     iaslog = '/private/var/log/installapplications.log'
+    formatstr = '%b %d %Y %H:%M:%S %z: '
     with open(iaslog, 'a+') as log:
-        log.write(text + '\n')
+        log.write(time.strftime(formatstr) + text + '\n')
 
 
 def getconsoleuser():
@@ -90,6 +93,24 @@ def installpackage(packagepath):
         pass
 
 
+def checkreceipt(packageid):
+    try:
+        cmd = ['/usr/sbin/pkgutil', '--pkg-info-plist', packageid]
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = proc.communicate()
+        receiptout = output[0]
+        if receiptout:
+            plist = plistlib.readPlistFromString(receiptout)
+            version = plist['pkg-version']
+        else:
+            version = '0.0.0.0.0'
+        return version
+    except Exception:
+        version = '0.0.0.0.0'
+        return version
+
+
 def gethash(filename):
     hash_function = hashlib.sha256()
     if not os.path.isfile(filename):
@@ -103,6 +124,14 @@ def gethash(filename):
         hash_function.update(chunk)
     fileref.close()
     return hash_function.hexdigest()
+
+
+def launchctl(*arg):
+    # Use *arg to pass unlimited variables to command.
+    cmd = arg
+    run = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, err = run.communicate()
+    return output
 
 
 def downloadfile(options):
@@ -176,6 +205,26 @@ def vararg_callback(option, opt_str, value, parser):
     setattr(parser.values, option.dest, value)
 
 
+def runrootscript(pathname):
+    '''Runs script located at given pathname'''
+    try:
+        proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        iaslog('Running Script: %s ' % (str(pathname)))
+        (out, err) = proc.communicate()
+        if err and proc.returncode == 0:
+            iaslog('Running Script: %s ' % (pathname))
+            iaslog('Output from %s on stderr but ran successfully: %s',
+                   pathname, err)
+        elif proc.returncode > 0:
+            iaslog('Failure running script %s: %s', pathname, err)
+            return False
+    except OSError as err:
+        iaslog('Failure running script %s: %s', pathname, err)
+        return False
+    return True
+
+
 def main():
     # Options
     usage = '%prog [options]'
@@ -221,7 +270,7 @@ def main():
 
     # installapplications variables
     iapath = '/private/tmp/installapplications'
-    ialdpath = '/Library/LaunchDaemons/com.erikng.installapplications.plist'
+    ialdpath = '/Library/LaunchDaemons/com.pinterest.installapplications.plist'
 
     # hardcoded json fileurl path
     jsonpath = '/private/tmp/installapplications/bootstrap.json'
@@ -250,104 +299,127 @@ def main():
         downloadfile(json_data)
         time.sleep(0.5)
 
-    # Load up file to grab all the packages.
+    # Load up file to grab all the items.
     iajson = json.loads(open(jsonpath).read())
 
     # Set the stages
     stages = ['prestage', 'stage1', 'stage2']
 
-    # Get the number of packages for DEPNotify
+    # Get the number of items for DEPNotify
     if opts.depnotify:
-        numberofpackages = 0
+        numberofitems = 0
         for stage in stages:
             if stage == 'prestage':
-                iaslog('Skipping DEPNotify package countdue to prestage.')
+                iaslog('Skipping DEPNotify item count due to prestage.')
             else:
-                numberofpackages += int(len(iajson[stage]))
+                numberofitems += int(len(iajson[stage]))
         # Mulitply by two for download and installation status messages
-        deplog('Command: Determinate: %d' % (numberofpackages*2))
+        deplog('Command: Determinate: %d' % (numberofitems*2))
 
     # Process all stages
     for stage in stages:
         iaslog('Beginning %s' % (stage))
-        # Loop through the packages and download/install them.
-        for package in iajson[stage]:
-            # Set the filepath and hash
-            path = package['file']
-            hash = package['hash']
-            # Check if the file already exists and matches the expected hash.
-            while not (os.path.isfile(path) and hash == gethash(path)):
-                # Check if additional headers are being passed and add them
-                # to the dictionary.
-                if opts.headers:
-                    package.update({'additional_headers': headers})
-                # Download the file once:
-                iaslog('Starting download: %s' % (package['url']))
-                if opts.depnotify:
-                    if stage == 'prestage':
-                        iaslog(
-                            'Skipping DEPNotify notification due to prestage.')
-                    else:
-                        deplog('Status: Downloading %s' % (package['name']))
-                downloadfile(package)
-                # Wait half a second to process
-                time.sleep(0.5)
-                # Check the files hash and redownload until it's correct.
-                # Bail after three times and log event.
-                failsleft = 3
-                while not hash == gethash(path):
-                    iaslog('Hash failed for %s - received: %s expected: %s' % (
-                           package['name'], gethash(path), hash))
-                    downloadfile(package)
-                    failsleft -= 1
-                    if failsleft == 0:
-                        iaslog('Hash retry failed for %s: exiting!' %
-                               package['name'])
-                        sys.exit(1)
-                # Time to install.
-                iaslog('Hash validated - received: %s expected: %s' % (
-                       gethash(path), hash))
-                # On Stage 1, we want to wait until we are actually in the
-                # user's session. Stage 1 is ideally used for installing files
-                # you need immediately.
-                if stage == 'stage1':
-                    if len(iajson['stage1']) > 0:
-                        while (getconsoleuser() is None
-                               or getconsoleuser() == u'loginwindow'
-                               or getconsoleuser() == u'_mbsetupuser'):
-                            iaslog('Detected Stage 1 - delaying install until \
-                                   user session.')
-                            time.sleep(1)
-                    # Open DEPNotify for the admin if they pass a condition.
-                    if opts.depnotify:
-                        for varg in opts.depnotify:
-                            notification = str(varg)
-                            if 'DEPNotifyPath:' in notification:
-                                depnotifypath = notification.split(' ')[-1]
-                                subprocess.call(['/usr/bin/open',
-                                                 depnotifypath])
+        # Loop through the items and download/install/run them.
+        for item in iajson[stage]:
+            # Set the filepath, name and type.
+            path = item['file']
+            name = item['name']
+            type = item['type']
+            if type == 'package':
+                hash = item['hash']
+                packageid = item['packageid']
+                version = item['version']
+                # Compare version of pacakge with installed version
+                if LooseVersion(checkreceipt(packageid)) >= LooseVersion(
+                        version):
+                    iaslog('Skipping %s - already installed.' % (name))
+                else:
+                    # Check if the file exists and matches the expected hash.
+                    while not (os.path.isfile(path) and hash == gethash(path)):
+                        # Check if additional headers are being passed and add
+                        # them to the dictionary.
+                        if opts.headers:
+                            item.update({'additional_headers': headers})
+                        # Download the file once:
+                        iaslog('Starting download: %s' % (item['url']))
+                        if opts.depnotify:
+                            if stage == 'prestage':
+                                iaslog(
+                                    'Skipping DEPNotify notification due to \
+                                    prestage.')
                             else:
-                                continue
-                iaslog('Installing %s from %s' % (package['name'], path))
-                if opts.depnotify:
-                    if stage == 'prestage':
-                        iaslog(
-                            'Skipping DEPNotify notification due to prestage.')
-                    else:
-                        deplog('Status: Installing: %s' % (package['name']))
-                        deplog('Command: Notification: %s' % (package['name']))
-                # We now check the install return code status since some
-                # packages like to delete themselves after they run. Why would
-                # you do this developers? Palo Alto Networks / GlobalProtect
-                installerstatus = installpackage(package['file'])
-                if installerstatus == 0:
-                    break
+                                deplog('Status: Downloading %s' % (name))
+                        downloadfile(item)
+                        # Wait half a second to process
+                        time.sleep(0.5)
+                        # Check the files hash and redownload until it's
+                        # correct. Bail after three times and log event.
+                        failsleft = 3
+                        while not hash == gethash(path):
+                            iaslog('Hash failed for %s - received: %s expected\
+                                   : %s' % (name, gethash(path), hash))
+                            downloadfile(item)
+                            failsleft -= 1
+                            if failsleft == 0:
+                                iaslog('Hash retry failed for %s: exiting!\
+                                       ' % name)
+                                sys.exit(1)
+                        # Time to install.
+                        iaslog('Hash validated - received: %s expected: %s' % (
+                               gethash(path), hash))
+                        # On Stage 1, we want to wait until we are actually in
+                        # the user's session. Stage 1 is ideally used for
+                        # installing files you need immediately.
+                        if stage == 'stage1':
+                            if len(iajson['stage1']) > 0:
+                                while (getconsoleuser() is None
+                                       or getconsoleuser() == u'loginwindow'
+                                       or getconsoleuser() == u'_mbsetupuser'):
+                                    iaslog('Detected Stage 1 - delaying \
+                                           install until user session.')
+                                    time.sleep(1)
+                            # Open DEPNotify for the admin if they pass
+                            # condition.
+                            if opts.depnotify:
+                                for varg in opts.depnotify:
+                                    depnstr = str(varg)
+                                    if 'DEPNotifyPath:' in depnstr:
+                                        depnotifypath = depnstr.split(' ')[-1]
+                                        subprocess.call(['/usr/bin/open',
+                                                         depnotifypath])
+                                    else:
+                                        continue
+                        iaslog('Installing %s from %s' % (name, path))
+                        if opts.depnotify:
+                            if stage == 'prestage':
+                                iaslog(
+                                    'Skipping DEPNotify notification due to \
+                                    prestage.')
+                            else:
+                                deplog('Status: Installing: %s' % (name))
+                                deplog('Command: Notification: %s' % (name))
+                        # We now check the install return code status since
+                        # some packages like to delete themselves after they
+                        # run. Why would you do this developers?
+                        # Palo Alto Networks / GlobalProtect
+                        installerstatus = installpackage(item['file'])
+                        if installerstatus == 0:
+                            break
+            elif type == 'rootscript':
+                iaslog('Starting root script: %s' % (path))
+                runrootscript(path)
+            elif type == 'userscript':
+                iaslog('Starting user script: %s' % (path))
+                runuserscript(path)
 
     # Kill the launchdaemon
     try:
         os.remove(ialdpath)
     except:  # noqa
         pass
+    launchctl(
+        '/bin/launchctl', 'remove', 'com.erikng.installapplications'
+    )
 
     # Kill the bootstrap path.
     try:
