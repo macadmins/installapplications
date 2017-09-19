@@ -158,6 +158,7 @@ The JSON structure is quite simple. You supply the following:
 - name (define a name for the package, for debug logging and DEPNotify)
 - version of package (to check package receipts)
 - package id (to check for package receipts)
+- type of package (currently `rootscript` or `package`)
 
 The following is an example JSON:
 ```json
@@ -169,7 +170,8 @@ The following is an example JSON:
       "packageid": "com.package.prestage",
       "version": "1.0",
       "hash": "sha256 hash",
-      "name": "PreStage Package Name"
+      "name": "PreStage Package Name",
+      "type": "package"
     }
   ],
   "stage1": [
@@ -179,8 +181,14 @@ The following is an example JSON:
       "packageid": "com.package.stage1",
       "version": "1.0",
       "hash": "sha256 hash",
-      "name": "Stage 1 Package Name"
-    }
+      "name": "Stage 1 Package Name",
+      "type": "package"
+    },
+    {
+      "file": "/private/tmp/installapplications/stage1_examplescript.py",
+      "name": "Example Script",
+      "type": "rootscript"
+    },
   ],
   "stage2": [
     {
@@ -189,7 +197,8 @@ The following is an example JSON:
       "packageid": "com.package.stage2",
       "version": "1.0",
       "hash": "sha256 hash",
-      "name": "Stage 2 Package Name"
+      "name": "Stage 2 Package Name",
+      "type": "package"
     }
   ]
 }
