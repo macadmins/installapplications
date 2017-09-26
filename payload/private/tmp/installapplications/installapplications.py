@@ -270,7 +270,7 @@ def main():
 
     # installapplications variables
     iapath = '/private/tmp/installapplications'
-    ialdpath = '/Library/LaunchDaemons/com.pinterest.installapplications.plist'
+    ialdpath = '/Library/LaunchDaemons/com.erikng.installapplications.plist'
 
     # hardcoded json fileurl path
     jsonpath = '/private/tmp/installapplications/bootstrap.json'
