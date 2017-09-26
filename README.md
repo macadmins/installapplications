@@ -113,10 +113,10 @@ installapplications.py --depnotify "Command: WindowTitle: InstallApplications is
 If you pass arguments for `Quit` or `Restart`, InstallApplications will ignore these commands until the end of the run.
 
 #### Opening DEPNotify with InstallApplications
-If you would like to open DEPNotify, simply pass the `DEPNotifyPath:` argument to the `--depnotify` option.
+If you would like to open DEPNotify, simply pass the `OpenDEPNotify` argument to the `--depnotify` option and modify the launchagent that you can find at `payload/LaunchAgents/` with your DEPNotify path.
 
 ```
-installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app"
+installapplications.py --depnotify "OpenDEPNotify"
 ```
 
 InstallApplications will wait until `stage1` to open DEPNotify as the `prestage` is used for SetupAssistant.
@@ -130,7 +130,7 @@ You can pass unlimited options to DEPNotify that will allow you to set it's vari
 <string>Command: NotificationOn:</string>
 <string>Command: Quit: Thanks for using InstallApplications and DEPNotify!</string>
 <string>Command: WindowStyle: ActivateOnStep</string>
-<string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string>
+<string>OpenDEPNotify</string>
 ```
 
 For a list of all DEPNotify options, please go [here](https://gitlab.com/Mactroll/DEPNotify).
