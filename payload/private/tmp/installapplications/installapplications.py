@@ -63,6 +63,11 @@ def getconsoleuser():
     return cfuser[0]
 
 
+def getconsoleuser_uid():
+    cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
+    return cfuser[1]
+
+
 def pkgregex(pkgpath):
     try:
         # capture everything after last / in the pkg filepath
@@ -271,6 +276,7 @@ def main():
     # installapplications variables
     iapath = '/private/tmp/installapplications'
     ialdpath = '/Library/LaunchDaemons/com.pinterest.installapplications.plist'
+    ialapath = '/Library/LaunchAgents/com.pinterest.iasopendepnotify.plist'
 
     # hardcoded json fileurl path
     jsonpath = '/private/tmp/installapplications/bootstrap.json'
@@ -383,10 +389,12 @@ def main():
                             if opts.depnotify:
                                 for varg in opts.depnotify:
                                     depnstr = str(varg)
-                                    if 'DEPNotifyPath:' in depnstr:
-                                        depnotifypath = depnstr.split(' ')[-1]
-                                        subprocess.call(['/usr/bin/open',
-                                                         depnotifypath])
+                                    if 'OpenDEPNofity' in depnstr:
+                                        launchctl('/bin/launchctl',
+                                                  'asuser',        
+                                                  str(getconsoleuser_uid()),
+                                                  '/bin/launchctl', 'load',
+                                                  iaslapath)
                                     else:
                                         continue
                         iaslog('Installing %s from %s' % (name, path))
@@ -418,7 +426,16 @@ def main():
     except:  # noqa
         pass
     launchctl(
-        '/bin/launchctl', 'remove', 'com.erikng.installapplications'
+        '/bin/launchctl', 'remove', 'com.pinterest.installapplications'
+    )
+
+    # Kill the launchagent
+    try:
+        os.remove(ialapath)
+    except:
+        pass
+    launchtl(
+        '/bin/launchctl', 'remove', 'com.pinterest.iasopendepnotify'
     )
 
     # Kill the bootstrap path.
