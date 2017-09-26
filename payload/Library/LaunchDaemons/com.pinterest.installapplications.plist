@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.erikng.installapplications</string>
+	<string>com.pinterest.installapplications</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/bin/python</string>
@@ -15,7 +15,7 @@
 		<!-- <string>Command: NotificationOn:</string> -->
 		<!-- <string>Command: Quit: Thanks for using InstallApplications and DEPNotify.</string> -->
 		<!-- <string>Command: WindowStyle: ActivateOnStep</string> -->
-		<!-- <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string> -->
+		<!-- <string>OpenDEPNotify</string> -->
 		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
