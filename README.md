@@ -55,6 +55,11 @@ Open the `build-info.json` file and specify your signing certificate.
 },
 ```
 
+### Running scripts
+InstallApplications can now handle running scripts (currently as root). Please see below for how to specify the json structure.
+
+Please note that these scripts must be marked executable (`chmod a+x`) and be present on the machine prior to loading (installed via an image or via a prior IAs package).
+
 ## Installing InstallApplications to another folder.
 If you need to install IA's to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
 
