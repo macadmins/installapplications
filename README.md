@@ -55,6 +55,14 @@ Open the `build-info.json` file and specify your signing certificate.
 },
 ```
 
+## Installing InstallApplications to another folder.
+If you need to install IA's to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
+
+```xml
+<string>--iapath</string>
+<string>/Library/Application Support/installapplications</string>
+```
+
 ### Configuring LaunchDaemon for your json
 Simply specify a url to your json file in the LaunchDaemon plist, located in the payload/Library/LaunchDaemons folder in the root of the project.
 
@@ -63,7 +71,12 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 <string>https://domain.tld</string>
 ```
 
-NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need to alter the variable `ialdpath` in installapplications.py, the `launchctld` call in the postinstall script, and the `launchctl` function call in installapplications.py.
+NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need enable the argument `ldidentifier` in the launchdaemon plist, and the `launchctld` call in the postinstall script.
+
+```xml
+<string>--ldidentifier</string>
+<string>com.pinterest.installapplications</string>
+```
 
 #### Optional Reboot
 If after installing all of your packages, you want to force a reboot, simply uncomment the flag in the launchdaemon plist.
