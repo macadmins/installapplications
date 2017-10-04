@@ -236,6 +236,12 @@ def main():
                  help=('Optional: Utilize DEPNotify and pass options to it.'))
     o.add_option('--headers', help=('Optional: Auth headers'))
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
+    o.add_option('--iapath',
+                 default='/Library/Application Support/installapplications',
+                 help=('Optional: Specify InstallApplications package path.'))
+    o.add_option('--ldidentifier',
+                 default='com.erikng.installapplications',
+                 help=('Optional: Specify LaunchDaemon identifier.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
 
@@ -269,11 +275,15 @@ def main():
     iaslog('Beginning InstallApplications run')
 
     # installapplications variables
-    iapath = '/private/tmp/installapplications'
-    ialdpath = '/Library/LaunchDaemons/com.erikng.installapplications.plist'
+    iapath = opts.iapath
+    iaslog('InstallApplications path: ' + str(iapath))
+    identifierplist = opts.ldidentifier + '.plist'
+    ialdpath = os.path.join('/Library/LaunchDaemons', identifierplist)
+    iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
 
     # hardcoded json fileurl path
-    jsonpath = '/private/tmp/installapplications/bootstrap.json'
+    jsonpath = os.path.join(iapath, 'bootstrap.json')
+    iaslog('InstallApplications json path: ' + str(jsonpath))
 
     # json data for gurl download
     json_data = {
@@ -417,13 +427,12 @@ def main():
         os.remove(ialdpath)
     except:  # noqa
         pass
-    launchctl(
-        '/bin/launchctl', 'remove', 'com.erikng.installapplications'
-    )
+    ialog('Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
+    launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
 
     # Kill the bootstrap path.
     try:
-        shutil.rmtree('/private/tmp/installapplications')
+        shutil.rmtree(iapath)
     except:  # noqa
         pass
 
