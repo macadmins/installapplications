@@ -7,9 +7,13 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/bin/python</string>
-		<string>/private/tmp/installapplications/installapplications.py</string>
+		<string>/Library/Application Support/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
+		<!-- <string>--iapath</string> -->
+		<!-- <string>/Library/Application Support/installapplications</string> -->
+		<!-- <string>--ldidentifier</string> -->
+		<!-- <string>com.erikng.installapplications</string> -->
 		<!-- <string>--depnotify</string> -->
 		<!-- <string>Command: WindowTitle: InstallApplications is Awesome!</string> -->
 		<!-- <string>Command: NotificationOn:</string> -->
