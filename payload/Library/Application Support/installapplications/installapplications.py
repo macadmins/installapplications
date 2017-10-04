@@ -217,10 +217,10 @@ def runrootscript(pathname):
             iaslog('Output from %s on stderr but ran successfully: %s',
                    pathname, err)
         elif proc.returncode > 0:
-            iaslog('Failure running script %s: %s', pathname, err)
+            iaslog('Failure running script: ' + str(err))
             return False
     except OSError as err:
-        iaslog('Failure running script %s: %s', pathname, err)
+        iaslog('Failure running script: ' + str(err))
         return False
     return True
 
@@ -427,7 +427,7 @@ def main():
         os.remove(ialdpath)
     except:  # noqa
         pass
-    ialog('Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
+    iaslog('Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
     launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
 
     # Kill the bootstrap path.
