@@ -43,6 +43,9 @@ sys.path.append('/usr/local/installapplications')
 import gurl  # noqa
 
 
+g_dry_run = False
+
+
 def deplog(text):
     depnotify = '/private/var/tmp/depnotify.log'
     with open(depnotify, 'a+') as log:
@@ -52,7 +55,10 @@ def deplog(text):
 def iaslog(text):
     print(text)
     NSLog('[InstallApplications] ' + text)
-    iaslog = '/private/var/log/installapplications.log'
+    if g_dry_run:
+        iaslog = '/tmp/installapplications.log'
+    else:
+        iaslog = '/private/var/log/installapplications.log'
     formatstr = '%b %d %Y %H:%M:%S %z: '
     with open(iaslog, 'a+') as log:
         log.write(time.strftime(formatstr) + text + '\n')
@@ -76,6 +82,9 @@ def installpackage(packagepath):
     try:
         cmd = ['/usr/sbin/installer', '-verboseR', '-pkg', packagepath,
                '-target', '/']
+        if g_dry_run:
+            iaslog('Dry run installing package: %s' % packagepath)
+            return 0
         proc = subprocess.Popen(cmd, shell=False, bufsize=-1,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
@@ -207,6 +216,9 @@ def vararg_callback(option, opt_str, value, parser):
 
 def runrootscript(pathname):
     '''Runs script located at given pathname'''
+    if g_dry_run:
+        iaslog('Dry run executing root script: %s' % pathname)
+        return True
     try:
         proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
@@ -244,8 +256,15 @@ def main():
                  help=('Optional: Specify LaunchDaemon identifier.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
+    o.add_option('--dry-run', help=('Optional: Dry run (for testing).'),
+                 action='store_true')
 
     opts, args = o.parse_args()
+
+    # Dry run that doesn't actually run or install anything.
+    if opts.dry_run:
+        global g_dry_run
+        g_dry_run = True
 
     # DEPNotify trigger commands that need to happen at the end of a run
     deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
@@ -264,7 +283,7 @@ def main():
     # Check for root and json url.
     if opts.jsonurl:
         jsonurl = opts.jsonurl
-        if os.getuid() != 0:
+        if not g_dry_run and (os.getuid() != 0):
             print 'InstallApplications requires root!'
             sys.exit(1)
     else:
