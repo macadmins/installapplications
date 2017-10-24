@@ -54,15 +54,24 @@ def main():
         for d in dirs:
             stages[str(d)] = []
         for file in files:
-            if file.endswith('.pkg'):
-                filepath = os.path.join(subdir, file)
-                filename = os.path.basename(filepath)
-                filehash = gethash(filepath)
-                filestage = os.path.basename(os.path.abspath(
-                            os.path.join(filepath, os.pardir)))
-                filejson = {'file':
-                            '/private/tmp/installapplications/%s' % filename,
-                            'url': '', 'hash': str(filehash), 'name': filename}
+            fileext = os.path.splitext(file)[1]
+            if fileext not in ('.pkg', '.py', '.sh', '.rb', '.php'):
+                continue
+            filepath = os.path.join(subdir, file)
+            filename = os.path.basename(filepath)
+            filehash = gethash(filepath)
+            filestage = os.path.basename(os.path.abspath(
+                        os.path.join(filepath, os.pardir)))
+            filejson = {'file':
+                        '/private/tmp/installapplications/%s' % filename,
+                        'url': '', 'hash': str(filehash), 'name': filename}
+            if fileext == '.pkg':
+                filejson['type'] = 'package'
+                filejson['packageid'] = ''
+                filejson['version'] = ''
+                stages[filestage].append(filejson)
+            else:
+                filejson['type'] = 'rootscript'
                 stages[filestage].append(filejson)
 
     # Saving the file back in the root dir
