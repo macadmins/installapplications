@@ -40,6 +40,8 @@ def main():
         'Required: Root directory path for InstallApplications stages'))
     op.add_option('--outputdir', default=None, help=('Optional: Output \
                   directory to save in. Default saves in the rootdir'))
+    op.add_option('--base-url', default=None, action='store',
+                  help=('Base URL to where root dir is hosted'))
     opts, args = op.parse_args()
 
     if opts.rootdir:
@@ -62,9 +64,14 @@ def main():
             filehash = gethash(filepath)
             filestage = os.path.basename(os.path.abspath(
                         os.path.join(filepath, os.pardir)))
+            if opts.base_url:
+                fileurl = '%s/%s/%s' % (opts.base_url, filestage, filename)
+            else:
+                fileurl = ''
             filejson = {'file':
                         '/private/tmp/installapplications/%s' % filename,
-                        'url': '', 'hash': str(filehash), 'name': filename}
+                        'url': fileurl, 'hash': str(filehash),
+                        'name': filename}
             if fileext == '.pkg':
                 filejson['type'] = 'package'
                 filejson['packageid'] = ''
