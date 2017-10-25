@@ -441,13 +441,6 @@ def main():
                         else:
                             deplog('Status: Installing: %s' % (name))
                             deplog('Command: Notification: %s' % (name))
-                    # We now check the install return code status since
-                    # some packages like to delete themselves after they
-                    # run. Why would you do this developers?
-                    # Palo Alto Networks / GlobalProtect
-                    installerstatus = installpackage(item['file'])
-                    if installerstatus == 0:
-                        break
             elif type == 'rootscript':
                 if 'url' in item:
                     download_if_needed(item, stage, opts)
