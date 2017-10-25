@@ -409,7 +409,7 @@ def main():
                 else:
                     # Download the package if it isn't already on disk.
                     download_if_needed(item, stage, opts)
-                    
+
                     # On Stage 1, we want to wait until we are actually in
                     # the user's session. Stage 1 is ideally used for
                     # installing files you need immediately.
@@ -441,6 +441,8 @@ def main():
                         else:
                             deplog('Status: Installing: %s' % (name))
                             deplog('Command: Notification: %s' % (name))
+                    # Install the package
+                    installerstatus = installpackage(item['file'])
             elif type == 'rootscript':
                 if 'url' in item:
                     download_if_needed(item, stage, opts)
