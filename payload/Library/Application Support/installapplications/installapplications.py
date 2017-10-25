@@ -391,9 +391,14 @@ def main():
         # Loop through the items and download/install/run them.
         for item in iajson[stage]:
             # Set the filepath, name and type.
-            path = item['file']
-            name = item['name']
-            type = item['type']
+            try:
+                path = item['file']
+                name = item['name']
+                type = item['type']
+            except KeyError as e:
+                iaslog('Invalid item %s: %s' % (repr(item), str(e)))
+                continue
+            iaslog('%s processing %s %s at %s' % (stage, type, name, path))
             if type == 'package':
                 packageid = item['packageid']
                 version = item['version']
