@@ -40,6 +40,8 @@ def main():
         'Required: Root directory path for InstallApplications stages'))
     op.add_option('--outputdir', default=None, help=('Optional: Output \
                   directory to save in. Default saves in the rootdir'))
+    op.add_option('--base-url', default=None, action='store',
+                  help=('Base URL to where root dir is hosted'))
     opts, args = op.parse_args()
 
     if opts.rootdir:
@@ -54,15 +56,29 @@ def main():
         for d in dirs:
             stages[str(d)] = []
         for file in files:
-            if file.endswith('.pkg'):
-                filepath = os.path.join(subdir, file)
-                filename = os.path.basename(filepath)
-                filehash = gethash(filepath)
-                filestage = os.path.basename(os.path.abspath(
-                            os.path.join(filepath, os.pardir)))
-                filejson = {'file':
-                            '/private/tmp/installapplications/%s' % filename,
-                            'url': '', 'hash': str(filehash), 'name': filename}
+            fileext = os.path.splitext(file)[1]
+            if fileext not in ('.pkg', '.py', '.sh', '.rb', '.php'):
+                continue
+            filepath = os.path.join(subdir, file)
+            filename = os.path.basename(filepath)
+            filehash = gethash(filepath)
+            filestage = os.path.basename(os.path.abspath(
+                        os.path.join(filepath, os.pardir)))
+            if opts.base_url:
+                fileurl = '%s/%s/%s' % (opts.base_url, filestage, filename)
+            else:
+                fileurl = ''
+            filejson = {'file':
+                        '/private/tmp/installapplications/%s' % filename,
+                        'url': fileurl, 'hash': str(filehash),
+                        'name': filename}
+            if fileext == '.pkg':
+                filejson['type'] = 'package'
+                filejson['packageid'] = ''
+                filejson['version'] = ''
+                stages[filestage].append(filejson)
+            else:
+                filejson['type'] = 'rootscript'
                 stages[filestage].append(filejson)
 
     # Saving the file back in the root dir
