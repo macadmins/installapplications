@@ -272,6 +272,9 @@ def download_if_needed(item, stage, opts):
         # Time to install.
         iaslog('Hash validated - received: %s expected: %s' % (
                gethash(path), hash))
+        # Fix script permissions.
+        if os.path.splitext(path)[1] != ".pkg":
+            os.chmod(path, 0755)
 
 
 def main():
