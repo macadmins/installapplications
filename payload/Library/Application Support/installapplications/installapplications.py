@@ -54,12 +54,6 @@ def deplog(text):
 
 def iaslog(text):
     NSLog('[InstallApplications] ' + text)
-    if g_dry_run:
-        return
-    iaslog = '/private/var/log/installapplications.log'
-    formatstr = '%b %d %Y %H:%M:%S %z: '
-    with open(iaslog, 'a+') as log:
-        log.write(time.strftime(formatstr) + text + '\n')
 
 
 def getconsoleuser():
