@@ -223,9 +223,8 @@ def runrootscript(pathname):
         iaslog('Running Script: %s ' % (str(pathname)))
         (out, err) = proc.communicate()
         if err and proc.returncode == 0:
-            iaslog('Running Script: %s ' % (pathname))
-            iaslog('Output from %s on stderr but ran successfully: %s',
-                   pathname, err)
+            iaslog('Output from %s on stderr but ran successfully: %s' %
+                   (pathname, err))
         elif proc.returncode > 0:
             iaslog('Failure running script: ' + str(err))
             return False
