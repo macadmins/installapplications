@@ -23,6 +23,10 @@
 		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
-  <true/>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/var/log/installapplications.log</string>
+	<key>StandardErrorPath</key>
+	<string>/var/log/installapplications.log</string>
 </dict>
 </plist>
