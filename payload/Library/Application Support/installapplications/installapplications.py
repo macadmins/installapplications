@@ -58,7 +58,7 @@ def iaslog(text):
 
 def getconsoleuser():
     cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
-    return cfuser[0]
+    return cfuser
 
 
 def pkgregex(pkgpath):
@@ -228,7 +228,37 @@ def runrootscript(pathname):
     return True
 
 
-def download_if_needed(item, stage, opts):
+def runuserscript(iauserscriptpath):
+    files = os.listdir(iauserscriptpath)
+    for file in files:
+        pathname = os.path.join(iauserscriptpath, file)
+        if g_dry_run:
+            iaslog('Dry run executing user script: %s' % pathname)
+            os.remove(pathname)
+            return True
+        try:
+            proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            iaslog('Running Script: %s ' % (str(pathname)))
+            (out, err) = proc.communicate()
+            if err and proc.returncode == 0:
+                iaslog(
+                    'Output from %s on stderr but ran successfully: %s' %
+                    (pathname, err))
+            elif proc.returncode > 0:
+                iaslog('Failure running script: ' + str(err))
+                return False
+        except OSError as err:
+            iaslog('Failure running script: ' + str(err))
+            return False
+        os.remove(pathname)
+        return True
+    else:
+        iaslog('No user scripts found!')
+        return False
+
+
+def download_if_needed(item, stage, type, opts):
     # Check if the file exists and matches the expected hash.
     path = item['file']
     name = item['name']
@@ -269,6 +299,20 @@ def download_if_needed(item, stage, opts):
         # Fix script permissions.
         if os.path.splitext(path)[1] != ".pkg":
             os.chmod(path, 0755)
+        if type is 'userscript':
+            os.chmod(path, 0777)
+
+
+def touch(path):
+    try:
+        touchfile = ['/usr/bin/touch', path]
+        proc = subprocess.Popen(touchfile, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        touchfileoutput, err = proc.communicate()
+        os.chmod(path, 0777)
+        return touchfileoutput
+    except Exception:
+        return None
 
 
 def main():
@@ -288,9 +332,15 @@ def main():
     o.add_option('--ldidentifier',
                  default='com.erikng.installapplications',
                  help=('Optional: Specify LaunchDaemon identifier.'))
+    o.add_option('--laidentifier',
+                 default='com.erikng.installapplications',
+                 help=('Optional: Specify LaunchAgent identifier.'))
     o.add_option('--reboot', default=None,
                  help=('Optional: Trigger a reboot.'), action='store_true')
     o.add_option('--dry-run', help=('Optional: Dry run (for testing).'),
+                 action='store_true')
+    o.add_option('--userscript', default=None,
+                 help=('Optional: Trigger a user script run.'),
                  action='store_true')
 
     opts, args = o.parse_args()
@@ -300,11 +350,50 @@ def main():
         global g_dry_run
         g_dry_run = True
 
+    # Begin logging events
+    iaslog('Beginning InstallApplications run')
+
+    # installapplications variables
+    iapath = opts.iapath
+    iauserscriptpath = os.path.join(iapath, 'userscripts')
+    iatmppath = '/var/tmp/installapplications'
+    iaslog('InstallApplications path: ' + str(iapath))
+    ldidentifierplist = opts.ldidentifier + '.plist'
+    ialdpath = os.path.join('/Library/LaunchDaemons', ldidentifierplist)
+    iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
+    laidentifierplist = opts.laidentifier + '.plist'
+    ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
+    iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
+
+    # Ensure the directories exist
+    if not os.path.isdir(iauserscriptpath):
+        for path in [iauserscriptpath, iatmppath]:
+            if not os.path.isdir(path):
+                os.makedirs(path)
+                os.chmod(path, 0777)
+
+    # hardcoded json fileurl path
+    jsonpath = os.path.join(iapath, 'bootstrap.json')
+    iaslog('InstallApplications json path: ' + str(jsonpath))
+
+    # User script touch path
+    userscripttouchpath = '/var/tmp/installapplications/.userscript'
+
+    if opts.userscript:
+        iaslog('Running in userscript mode')
+        uscript = runuserscript(iauserscriptpath)
+        if uscript:
+            os.remove(userscripttouchpath)
+            sys.exit(0)
+        else:
+            iaslog('Failed to run script!')
+            sys.exit(1)
+
     # DEPNotify trigger commands that need to happen at the end of a run
     deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
-                   'DEPNotifyPath']
+                   'DEPNotifyPath', 'DEPNotifyArguments']
 
-    # Look for all the DEPNotify options but skip the ones that are usual
+    # Look for all the DEPNotify options but skip the ones that are usually
     # done after a full run.
     if opts.depnotify:
         for varg in opts.depnotify:
@@ -324,27 +413,6 @@ def main():
         iaslog('No JSON URL specified!')
         sys.exit(1)
 
-    # Begin logging events
-    iaslog('Beginning InstallApplications run')
-
-    # installapplications variables
-    iapath = opts.iapath
-    iaslog('InstallApplications path: ' + str(iapath))
-    identifierplist = opts.ldidentifier + '.plist'
-    ialdpath = os.path.join('/Library/LaunchDaemons', identifierplist)
-    iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
-
-    # hardcoded json fileurl path
-    jsonpath = os.path.join(iapath, 'bootstrap.json')
-    iaslog('InstallApplications json path: ' + str(jsonpath))
-
-    # json data for gurl download
-    json_data = {
-            'url': jsonurl,
-            'file': jsonpath,
-            'name': 'Bootstrap.json'
-        }
-
     # Grab auth headers if they exist and update the json_data dict.
     if opts.headers:
         headers = {'Authorization': opts.headers}
@@ -355,6 +423,13 @@ def main():
         os.makedirs(iapath)
     except Exception:
         pass
+
+    # json data for gurl download
+    json_data = {
+            'url': jsonurl,
+            'file': jsonpath,
+            'name': 'Bootstrap.json'
+        }
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
@@ -382,6 +457,47 @@ def main():
     # Process all stages
     for stage in stages:
         iaslog('Beginning %s' % (stage))
+        if stage == 'stage1':
+            # Open DEPNotify for the admin if they pass
+            # condition.
+            depnotifypath = None
+            depnotifyarguments = None
+            if opts.depnotify:
+                for varg in opts.depnotify:
+                    depnstr = str(varg)
+                    if 'DEPNotifyPath:' in depnstr:
+                        depnotifypath = depnstr.split(' ', 1)[-1]
+                    if 'DEPNotifyArguments:' in depnstr:
+                        depnotifyarguments = depnstr.split(' ', 1)[-1]
+            if depnotifypath:
+                while (getconsoleuser()[0] is None
+                       or getconsoleuser()[0] == u'loginwindow'
+                       or getconsoleuser()[0] == u'_mbsetupuser'):
+                    iaslog('Detected Stage 1 - delaying \
+                           DEPNotify launch until user session.')
+                    time.sleep(1)
+                iaslog('Creating DEPNotify Launcher')
+                depnotifyscriptpath = os.path.join(
+                    iauserscriptpath,
+                    'depnotifylauncher.py')
+                if depnotifyarguments:
+                    depnotifystring = 'depnotifycmd = ' \
+                        """['/usr/bin/open', '""" + depnotifypath + "', '" + \
+                        '--args' + """', '""" + depnotifyarguments + "']"
+                else:
+                    depnotifystring = 'depnotifycmd = ' \
+                        """['/usr/bin/open', '""" + depnotifypath + "']"
+                depnotifyscript = "#!/usr/bin/python"
+                depnotifyscript += '\n' + "import subprocess"
+                depnotifyscript += '\n' + depnotifystring
+                depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
+                with open(depnotifyscriptpath, 'wb') as f:
+                    f.write(depnotifyscript)
+                os.chmod(depnotifyscriptpath, 0777)
+                touch(userscripttouchpath)
+                while os.path.isfile(userscripttouchpath):
+                    iaslog('Waiting for DEPNotify script to complete')
+                    time.sleep(0.5)
         # Loop through the items and download/install/run them.
         for item in iajson[stage]:
             # Set the filepath, name and type.
@@ -393,6 +509,7 @@ def main():
                 iaslog('Invalid item %s: %s' % (repr(item), str(e)))
                 continue
             iaslog('%s processing %s %s at %s' % (stage, type, name, path))
+
             if type == 'package':
                 packageid = item['packageid']
                 version = item['version']
@@ -402,30 +519,19 @@ def main():
                     iaslog('Skipping %s - already installed.' % (name))
                 else:
                     # Download the package if it isn't already on disk.
-                    download_if_needed(item, stage, opts)
+                    download_if_needed(item, stage, type, opts)
 
                     # On Stage 1, we want to wait until we are actually in
                     # the user's session. Stage 1 is ideally used for
                     # installing files you need immediately.
                     if stage == 'stage1':
                         if len(iajson['stage1']) > 0:
-                            while (getconsoleuser() is None
-                                   or getconsoleuser() == u'loginwindow'
-                                   or getconsoleuser() == u'_mbsetupuser'):
+                            while (getconsoleuser()[0] is None
+                                   or getconsoleuser()[0] == u'loginwindow'
+                                   or getconsoleuser()[0] == u'_mbsetupuser'):
                                 iaslog('Detected Stage 1 - delaying \
                                        install until user session.')
                                 time.sleep(1)
-                        # Open DEPNotify for the admin if they pass
-                        # condition.
-                        if opts.depnotify:
-                            for varg in opts.depnotify:
-                                depnstr = str(varg)
-                                if 'DEPNotifyPath:' in depnstr:
-                                    depnotifypath = depnstr.split(' ')[-1]
-                                    subprocess.call(['/usr/bin/open',
-                                                     depnotifypath])
-                                else:
-                                    continue
                     iaslog('Installing %s from %s' % (name, path))
                     if opts.depnotify:
                         if stage == 'prestage':
@@ -439,22 +545,38 @@ def main():
                     installerstatus = installpackage(item['file'])
             elif type == 'rootscript':
                 if 'url' in item:
-                    download_if_needed(item, stage, opts)
+                    download_if_needed(item, stage, type, opts)
                 iaslog('Starting root script: %s' % (path))
                 runrootscript(path)
             elif type == 'userscript':
+                if stage == 'prestage':
+                    iaslog('Detected PreStage and user script. \
+                          User scripts cannot work in PreStage! Removing \
+                          %s') % path
+                    os.remove(path)
+                    pass
                 if 'url' in item:
-                    download_if_needed(item, stage, opts)
-                iaslog('Starting user script: %s' % (path))
-                runuserscript(path)
+                    download_if_needed(item, stage, type, opts)
+                iaslog('Triggering LaunchAgent for user script: %s' % (path))
+                touch(userscripttouchpath)
+                while os.path.isfile(userscripttouchpath):
+                    iaslog('Waiting for user script to complete: %s' % (path))
+                    time.sleep(0.5)
 
-    # Kill the launchdaemon
+    # Kill the launchdaemon and agent
     try:
         os.remove(ialdpath)
     except:  # noqa
         pass
+    try:
+        os.remove(ialapath)
+    except:  # noqa
+        pass
     iaslog('Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
     launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
+    iaslog('Removing LaunchAgent from launchctl list: ' + opts.laidentifier)
+    launchctl('/bin/launchctl', 'asuser', str(getconsoleuser()[1]),
+              '/bin/launchctl', 'remove', opts.laidentifier)
 
     # Kill the bootstrap path.
     try:
