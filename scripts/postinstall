@@ -15,27 +15,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Loads the InstallApplications LaunchDaemon
-
+# Loads the InstallApplications LaunchAgent LaunchDaemon
+from SystemConfiguration import SCDynamicStoreCopyConsoleUser
+import os
 import subprocess
 import sys
-import os
 
 
-def launchctld(identifier):
-    try:
-        path = os.path.join('/Library', 'LaunchDaemons', identifier)
-        cmd = ['/bin/launchctl', 'load', path]
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        output, err = proc.communicate()
-        return output
-    except KeyError:
-        pass
+def getconsoleuser():
+    cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
+    return cfuser
+
+
+def launchctl(*arg):
+    # Use *arg to pass unlimited variables to command.
+    cmd = arg
+    run = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, err = run.communicate()
+    return output
 
 
 def main():
-    launchctld('com.erikng.installapplications.plist')
+    lapath = os.path.join('/Library', 'LaunchAgents',
+                          'com.erikng.installapplications.plist')
+    ldpath = os.path.join('/Library', 'LaunchDaemons',
+                          'com.erikng.installapplications.plist')
+    # Fail the install if the admin forgets to change their paths and they
+    # don't exist.
+    for file in [lapath, ldpath]:
+        if os.path.isfile(file):
+            pass
+        else:
+            print 'File does not exist: %s' % file
+            sys.exit(1)
+    currentuseruid = getconsoleuser()
+    launchctl('/bin/launchctl', 'load', ldpath)
+    if (currentuseruid[0] is None or currentuseruid[0] == u'loginwindow'
+            or currentuseruid[0] == u'_mbsetupuser'):
+        pass
+    else:
+        launchctl('/bin/launchctl', 'asuser', str(currentuseruid[1]),
+                  '/bin/launchctl', 'load', lapath)
 
 
 if __name__ == '__main__':
