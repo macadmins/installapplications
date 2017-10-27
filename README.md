@@ -23,6 +23,7 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 
 1. MDM will send a push request utilizing `InstallApplication` to inform the device of a package installation.
 2. InstallApplications (this tool) will install and load it's LaunchDaemon.
+2. InstallApplications (this tool) will install and load it's LaunchAgent if in the proper context (installed outside of SetupAssistant).
 3. InstallApplications will begin to install your prestage packages (if configured) during the SetupAssistant.
 4. If stage1 packages are configured, InstallApplications will wait until the user is in their active session before installing.
 5. If stage 2 packages are configured, InstallApplications will install these packages during the user session.
@@ -31,11 +32,11 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 ## Stages
 There are currently three stages of packages:
 #### prestage ####
-- Packages that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
+- Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
 #### stage1 ####
-- Packages that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
+- Packages/rootscripts/userscripts that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
 #### stage2 ####
-- Packages that need to be installed, but are not needed immediately.
+- Packages/rootscripts/userscripts that need to be installed, but are not needed immediately.
 - stage2 begins immediately after the conclusion of stage1.
 
 By utilizing prestage/stage1, you can have **almost instant UI notifications** for your users.
@@ -55,10 +56,14 @@ Open the `build-info.json` file and specify your signing certificate.
 },
 ```
 
-### Running scripts
-InstallApplications can now handle running scripts (currently as root). Please see below for how to specify the json structure.
+### Downloading and running scripts
+InstallApplications can now handle downloading and running scripts. Please see below for how to specify the json structure.
 
-Please note that these scripts must be marked executable (`chmod a+x`) and be present on the machine prior to loading (installed via an image or via a prior IAs package).
+For user scripts, you **must** set the folder path to the `userscripts` sub folder. This is due to the folder having world-wide permissions, allowing the LaunchAgent/User to delete the scripts when finished.
+
+```json
+"file": "/Library/Application Support/installapplications/userscripts/stage1_exampleuserscript.py",
+```
 
 ## Installing InstallApplications to another folder.
 If you need to install IA's to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
@@ -68,7 +73,7 @@ If you need to install IA's to another folder, you can modify the munki-pkg `pay
 <string>/Library/Application Support/installapplications</string>
 ```
 
-### Configuring LaunchDaemon for your json
+### Configuring LaunchAgent/LaunchDaemon for your json
 Simply specify a url to your json file in the LaunchDaemon plist, located in the payload/Library/LaunchDaemons folder in the root of the project.
 
 ```xml
@@ -76,11 +81,13 @@ Simply specify a url to your json file in the LaunchDaemon plist, located in the
 <string>https://domain.tld</string>
 ```
 
-NOTE: If you alter the name of the LaunchDaemon or the Label, you will also need enable the argument `ldidentifier` in the launchdaemon plist, and the `launchctld` call in the postinstall script.
+NOTE: If you alter the name of the LaunchAgent/LaunchDaemon or the Label, you will also need enable the arguments `laidentifier` and `ldidentifier` in the launchdaemon plist, and the `lapath` and `ldpath` varibles in the postinstall script.
 
 ```xml
+<string>--laidentifier</string>
+<string>com.example.installapplications</string>
 <string>--ldidentifier</string>
-<string>com.pinterest.installapplications</string>
+<string>com.example.installapplications</string>
 ```
 
 #### Optional Reboot
@@ -155,12 +162,17 @@ You can pass unlimited options to DEPNotify that will allow you to set it's vari
 <string>Command: Quit: Thanks for using InstallApplications and DEPNotify!</string>
 <string>Command: WindowStyle: ActivateOnStep</string>
 <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string>
+<string>DEPNotifyArguments: -munki</string>
 ```
 
 For a list of all DEPNotify options, please go [here](https://gitlab.com/Mactroll/DEPNotify).
 
+Please note that `DEPNotifyPath` and `DEPNotifyArguments` are custom options for this tool only and are not available in DEPNotify.
+
 ### Logging
-All actions are logged at `/private/var/log/installapplications.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
+All root actions are logged at `/private/var/log/installapplications.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
+
+All root actions are logged at `/var/tmp/installapplications/installapplications.user.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
 
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
@@ -176,20 +188,20 @@ This guarantees that the package you place on the web for download is the packag
 
 ### JSON Structure
 The JSON structure is quite simple. You supply the following:
-- filepath (currently hardcoded to `/private/tmp/installapplications`)
+- filepath (currently hardcoded to `/Library/Application Support/installapplications`)
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
 - name (define a name for the package, for debug logging and DEPNotify)
 - version of package (to check package receipts)
 - package id (to check for package receipts)
-- type of package (currently `rootscript` or `package`)
+- type of item (currently `rootscript`, `package` or `userscript`)
 
 The following is an example JSON:
 ```json
 {
   "prestage": [
     {
-      "file": "/private/tmp/installapplications/prestage.pkg",
+      "file": "/Library/Application Support/installapplications/prestage.pkg",
       "url": "https://domain.tld/prestage.pkg",
       "packageid": "com.package.prestage",
       "version": "1.0",
@@ -200,7 +212,7 @@ The following is an example JSON:
   ],
   "stage1": [
     {
-      "file": "/private/tmp/installapplications/stage1.pkg",
+      "file": "/Library/Application Support/installapplications/stage1.pkg",
       "url": "https://domain.tld/stage1.pkg",
       "packageid": "com.package.stage1",
       "version": "1.0",
@@ -209,14 +221,23 @@ The following is an example JSON:
       "type": "package"
     },
     {
-      "file": "/private/tmp/installapplications/stage1_examplescript.py",
+      "file": "/Library/Application Support/installapplications/stage1_examplerootscript.py",
+      "hash": "sha256 hash",
       "name": "Example Script",
-      "type": "rootscript"
+      "type": "rootscript",
+      "url": "https://domain.tld/stage1_examplerootscript.py"
     },
+    {
+      "file": "/Library/Application Support/installapplications/userscripts/stage1_exampleuserscript.py",
+      "hash": "sha256 hash",
+      "name": "Example Script",
+      "type": "userscript",
+      "url": "https://domain.tld/stage1_exampleuserscript.py"
+    }
   ],
   "stage2": [
     {
-      "file": "/private/tmp/installapplications/stage2.pkg",
+      "file": "/Library/Application Support/installapplications/stage2.pkg",
       "url": "https://domain.tld/stage2.pkg",
       "packageid": "com.package.stage2",
       "version": "1.0",
