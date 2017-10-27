@@ -12,6 +12,8 @@
 		<string>https://domain.tld</string>
 		<!-- <string>--iapath</string> -->
 		<!-- <string>/Library/Application Support/installapplications</string> -->
+		<!-- <string>--laidentifier</string> -->
+		<!-- <string>com.erikng.installapplications</string> -->
 		<!-- <string>--ldidentifier</string> -->
 		<!-- <string>com.erikng.installapplications</string> -->
 		<!-- <string>--depnotify</string> -->
@@ -20,6 +22,7 @@
 		<!-- <string>Command: Quit: Thanks for using InstallApplications and DEPNotify.</string> -->
 		<!-- <string>Command: WindowStyle: ActivateOnStep</string> -->
 		<!-- <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string> -->
+		<!-- <string>DEPNotifyArguments: -munki</string> -->
 		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
