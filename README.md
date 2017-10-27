@@ -137,6 +137,12 @@ If you would like to open DEPNotify, simply pass the `DEPNotifyPath:` argument t
 installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app"
 ```
 
+If you need additional arguments to pass to DEPNotify, add `DEPNotifyArguments:` to the `--depnotify` option.
+
+```
+installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app" "DEPNotifyArguments: -munki"
+```
+
 InstallApplications will wait until `stage1` to open DEPNotify as the `prestage` is used for SetupAssistant.
 
 #### DEPNotify LaunchDaemon
