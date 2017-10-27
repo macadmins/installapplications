@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.erikng.installapplications</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/python</string>
+		<string>/Library/Application Support/installapplications/installapplications.py</string>
+		<string>--userscript</string>
+	</array>
+	<key>KeepAlive</key>
+  <dict>
+     <key>PathState</key>
+     <dict>
+       <key>/var/tmp/installapplications/.userscript</key>
+       <true/>
+     </dict>
+  </dict>
+  <key>OnDemand</key>
+  <true/>
+	<key>StandardOutPath</key>
+	<string>/var/tmp/installapplications/installapplications.user.log</string>
+	<key>StandardErrorPath</key>
+	<string>/var/tmp/installapplications/installapplications.user.log</string>
+</dict>
+</plist>
