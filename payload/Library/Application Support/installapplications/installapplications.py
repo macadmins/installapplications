@@ -499,7 +499,7 @@ def main():
                         mlogfile = os.path.join(mlogpath,
                                                 'ManagedSoftwareUpdate.log')
                         if not os.path.isdir(mlogpath):
-                            os.mkdir(mlogpath, 0755)
+                            os.makedirs(mlogpath, 0755)
                         if not os.path.isfile(mlogfile):
                             touch(mlogfile)
                     depnotifystring = 'depnotifycmd = ' \
