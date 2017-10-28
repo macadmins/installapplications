@@ -492,6 +492,16 @@ def main():
                     iauserscriptpath,
                     'depnotifylauncher.py')
                 if depnotifyarguments:
+                    if '-munki' in depnotifyarguments:
+                        # Touch Munki Logs if they do not exist so DEPNotify
+                        # can show them.
+                        mlogpath = '/Library/Managed Installs/Logs'
+                        mlogfile = os.path.join(mlogpath,
+                                                'ManagedSoftwareUpdate.log')
+                        if not os.path.isdir(mlogpath):
+                            os.mkdir(mlogpath, 0755)
+                        if not os.path.isfile(mlogfile):
+                            touch(mlogfile)
                     depnotifystring = 'depnotifycmd = ' \
                         """['/usr/bin/open', '""" + depnotifypath + "', '" + \
                         '--args' + """', '""" + depnotifyarguments + "']"
