@@ -263,7 +263,7 @@ def runuserscript(iauserscriptpath):
         return False
 
 
-def download_if_needed(item, stage, type, opts):
+def download_if_needed(item, stage, type, opts, depnotifystatus):
     # Check if the file exists and matches the expected hash.
     path = item['file']
     name = item['name']
@@ -282,7 +282,8 @@ def download_if_needed(item, stage, type, opts):
                     'Skipping DEPNotify notification due to \
                     prestage.')
             else:
-                deplog('Status: Downloading %s' % (name))
+                if depnotifystatus:
+                    deplog('Status: Downloading %s' % (name))
         downloadfile(item)
         # Wait half a second to process
         time.sleep(0.5)
@@ -369,6 +370,7 @@ def main():
     laidentifierplist = opts.laidentifier + '.plist'
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
     iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
+    depnotifystatus = True
 
     # Ensure the directories exist
     if not os.path.isdir(iauserscriptpath):
@@ -396,7 +398,8 @@ def main():
 
     # DEPNotify trigger commands that need to happen at the end of a run
     deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
-                   'DEPNotifyPath', 'DEPNotifyArguments']
+                   'DEPNotifyPath', 'DEPNotifyArguments',
+                   'DEPNotifySkipStatus']
 
     # Look for all the DEPNotify options but skip the ones that are usually
     # done after a full run.
@@ -404,7 +407,8 @@ def main():
         for varg in opts.depnotify:
             notification = str(varg)
             if any(x in notification for x in deptriggers):
-                continue
+                if 'DEPNotifySkipStatus' in notification:
+                    depnotifystatus = False
             else:
                 deplog(notification)
 
@@ -457,7 +461,8 @@ def main():
             else:
                 numberofitems += int(len(iajson[stage]))
         # Mulitply by two for download and installation status messages
-        deplog('Command: Determinate: %d' % (numberofitems*2))
+        if depnotifystatus:
+            deplog('Command: Determinate: %d' % (numberofitems*2))
 
     # Process all stages
     for stage in stages:
@@ -524,7 +529,8 @@ def main():
                     iaslog('Skipping %s - already installed.' % (name))
                 else:
                     # Download the package if it isn't already on disk.
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, opts,
+                                       depnotifystatus)
 
                     # On Stage 1, we want to wait until we are actually in
                     # the user's session. Stage 1 is ideally used for
@@ -544,18 +550,22 @@ def main():
                                 'Skipping DEPNotify notification due to \
                                 prestage.')
                         else:
-                            deplog('Status: Installing: %s' % (name))
-                            deplog('Command: Notification: %s' % (name))
+                            if depnotifystatus:
+                                deplog('Status: Installing: %s' % (name))
                     # Install the package
                     installerstatus = installpackage(item['file'])
             elif type == 'rootscript':
                 if 'url' in item:
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, opts,
+                                       depnotifystatus)
                 iaslog('Starting root script: %s' % (path))
                 try:
                     donotwait = item['donotwait']
                 except KeyError as e:
                     donotwait = False
+                if opts.depnotify:
+                    if depnotifystatus:
+                        deplog('Status: Installing: %s' % (name))
                 if donotwait:
                     runrootscript(path, True)
                 else:
@@ -568,9 +578,13 @@ def main():
                     os.remove(path)
                     pass
                 if 'url' in item:
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, opts,
+                                       depnotifystatus)
                 iaslog('Triggering LaunchAgent for user script: %s' % (path))
                 touch(userscripttouchpath)
+                if opts.depnotify:
+                    if depnotifystatus:
+                        deplog('Status: Installing: %s' % (name))
                 while os.path.isfile(userscripttouchpath):
                     iaslog('Waiting for user script to complete: %s' % (path))
                     time.sleep(0.5)

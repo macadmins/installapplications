@@ -17,6 +17,7 @@
 		<!-- <string>--ldidentifier</string> -->
 		<!-- <string>com.erikng.installapplications</string> -->
 		<!-- <string>--depnotify</string> -->
+		<!-- <string>DEPNotifySkipStatus</string> -->
 		<!-- <string>Command: WindowTitle: InstallApplications is Awesome!</string> -->
 		<!-- <string>Command: NotificationOn:</string> -->
 		<!-- <string>Command: Quit: Thanks for using InstallApplications and DEPNotify.</string> -->

@@ -152,11 +152,17 @@ installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app" "DEPN
 
 InstallApplications will wait until `stage1` to open DEPNotify as the `prestage` is used for SetupAssistant.
 
+**By default** InstallApplications will create a `determinate` and show a status for each item in your stages. If you would like to skip this behavior, pass `DEPNotifySkipStatus` to the `--depnotify` options
+```
+installapplications.py --depnotify "DEPNotifySkipStatus"`
+```
+
 #### DEPNotify LaunchDaemon
 You can pass unlimited options to DEPNotify that will allow you to set it's various options.
 
 ```xml
 <string>--depnotify</string>
+<string>DEPNotifySkipStatus</string>
 <string>Command: WindowTitle: InstallApplications is Awesome!</string>
 <string>Command: NotificationOn:</string>
 <string>Command: Quit: Thanks for using InstallApplications and DEPNotify!</string>
