@@ -584,8 +584,6 @@ def main():
         os.remove(ialapath)
     except:  # noqa
         pass
-    iaslog('Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
-    launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
     iaslog('Removing LaunchAgent from launchctl list: ' + opts.laidentifier)
     launchctl('/bin/launchctl', 'asuser', str(getconsoleuser()[1]),
               '/bin/launchctl', 'remove', opts.laidentifier)
@@ -609,6 +607,10 @@ def main():
     # Trigger a reboot
     if opts.reboot:
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
+    else:
+        iaslog(
+            'Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
+        launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
 
 
 if __name__ == '__main__':
