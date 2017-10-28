@@ -206,22 +206,27 @@ def vararg_callback(option, opt_str, value, parser):
     setattr(parser.values, option.dest, value)
 
 
-def runrootscript(pathname):
+def runrootscript(pathname, donotwait):
     '''Runs script located at given pathname'''
     if g_dry_run:
         iaslog('Dry run executing root script: %s' % pathname)
         return True
     try:
-        proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        iaslog('Running Script: %s ' % (str(pathname)))
-        (out, err) = proc.communicate()
-        if err and proc.returncode == 0:
-            iaslog('Output from %s on stderr but ran successfully: %s' %
-                   (pathname, err))
-        elif proc.returncode > 0:
-            iaslog('Failure running script: ' + str(err))
-            return False
+        if donotwait:
+            iaslog('Do not wait triggered')
+            proc = subprocess.Popen(pathname)
+            iaslog('Running Script: %s ' % (str(pathname)))
+        else:
+            proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            iaslog('Running Script: %s ' % (str(pathname)))
+            (out, err) = proc.communicate()
+            if err and proc.returncode == 0:
+                iaslog('Output from %s on stderr but ran successfully: %s' %
+                       (pathname, err))
+            elif proc.returncode > 0:
+                iaslog('Failure running script: ' + str(err))
+                return False
     except OSError as err:
         iaslog('Failure running script: ' + str(err))
         return False
@@ -547,7 +552,14 @@ def main():
                 if 'url' in item:
                     download_if_needed(item, stage, type, opts)
                 iaslog('Starting root script: %s' % (path))
-                runrootscript(path)
+                try:
+                    donotwait = item['donotwait']
+                except KeyError as e:
+                    donotwait = False
+                if donotwait:
+                    runrootscript(path, True)
+                else:
+                    runrootscript(path, False)
             elif type == 'userscript':
                 if stage == 'prestage':
                     iaslog('Detected PreStage and user script. \
