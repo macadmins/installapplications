@@ -410,6 +410,7 @@ def main():
                 if 'DEPNotifySkipStatus' in notification:
                     depnotifystatus = False
             else:
+                iaslog('Sending %s to DEPNotify' % (str(notification)))
                 deplog(notification)
 
     # Check for root and json url.
@@ -613,6 +614,7 @@ def main():
         for varg in opts.depnotify:
             notification = str(varg)
             if any(x in notification for x in deptriggers):
+                iaslog('Sending %s to DEPNotify' % (str(notification)))
                 deplog(notification)
             else:
                 iaslog(
