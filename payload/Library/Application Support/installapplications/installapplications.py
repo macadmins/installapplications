@@ -277,10 +277,10 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         # Download the file once:
         iaslog('Starting download: %s' % (item['url']))
         if opts.depnotify:
-            if stage == 'prestage':
+            if stage == 'setupassistant':
                 iaslog(
                     'Skipping DEPNotify notification due to \
-                    prestage.')
+                    setupassistant.')
             else:
                 if depnotifystatus:
                     deplog('Status: Downloading %s' % (name))
@@ -451,14 +451,14 @@ def main():
     iajson = json.loads(open(jsonpath).read())
 
     # Set the stages
-    stages = ['prestage', 'stage1', 'stage2']
+    stages = ['setupassistant', 'userland']
 
     # Get the number of items for DEPNotify
     if opts.depnotify:
         numberofitems = 0
         for stage in stages:
-            if stage == 'prestage':
-                iaslog('Skipping DEPNotify item count due to prestage.')
+            if stage == 'setupassistant':
+                iaslog('Skipping DEPNotify item count due to setupassistant.')
             else:
                 numberofitems += int(len(iajson[stage]))
         # Mulitply by two for download and installation status messages
@@ -468,7 +468,7 @@ def main():
     # Process all stages
     for stage in stages:
         iaslog('Beginning %s' % (stage))
-        if stage == 'stage1':
+        if stage == 'userland':
             # Open DEPNotify for the admin if they pass
             # condition.
             depnotifypath = None
@@ -484,8 +484,8 @@ def main():
                 while (getconsoleuser()[0] is None
                        or getconsoleuser()[0] == u'loginwindow'
                        or getconsoleuser()[0] == u'_mbsetupuser'):
-                    iaslog('Detected Stage 1 - delaying \
-                           DEPNotify launch until user session.')
+                    iaslog('Detected SetupAssistant in userland stage - \
+                           delaying DEPNotify launch until user session.')
                     time.sleep(1)
                 iaslog('Creating DEPNotify Launcher')
                 depnotifyscriptpath = os.path.join(
@@ -543,23 +543,23 @@ def main():
                     download_if_needed(item, stage, type, opts,
                                        depnotifystatus)
 
-                    # On Stage 1, we want to wait until we are actually in
-                    # the user's session. Stage 1 is ideally used for
-                    # installing files you need immediately.
-                    if stage == 'stage1':
-                        if len(iajson['stage1']) > 0:
+                    # On userland stage, we want to wait until we are actually
+                    # in the user's session.
+                    if stage == 'userland':
+                        if len(iajson['userland']) > 0:
                             while (getconsoleuser()[0] is None
                                    or getconsoleuser()[0] == u'loginwindow'
                                    or getconsoleuser()[0] == u'_mbsetupuser'):
-                                iaslog('Detected Stage 1 - delaying \
-                                       install until user session.')
+                                iaslog('Detected SetupAssistant in userland \
+                                       stage - delaying install until user \
+                                       session.')
                                 time.sleep(1)
                     iaslog('Installing %s from %s' % (name, path))
                     if opts.depnotify:
-                        if stage == 'prestage':
+                        if stage == 'setupassistant':
                             iaslog(
                                 'Skipping DEPNotify notification due to \
-                                prestage.')
+                                setupassistant.')
                         else:
                             if depnotifystatus:
                                 deplog('Status: Installing: %s' % (name))
@@ -582,10 +582,10 @@ def main():
                 else:
                     runrootscript(path, False)
             elif type == 'userscript':
-                if stage == 'prestage':
-                    iaslog('Detected PreStage and user script. \
-                          User scripts cannot work in PreStage! Removing \
-                          %s') % path
+                if stage == 'setupassistant':
+                    iaslog('Detected setupassistant and user script. \
+                          User scripts cannot work in setupassistant stage! \
+                          Removing %s') % path
                     os.remove(path)
                     pass
                 if 'url' in item:

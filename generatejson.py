@@ -6,7 +6,7 @@
 #
 # --rootdir path is the directory that contains each stage's pkgs directory
 # As of InstallApplications 7/18/17, the directories must be named (lowercase):
-#   'prestage', 'stage1', and 'stage2'
+#   'setupassistant', and 'userland'
 #
 # The generated Json will be saved in the root directory
 # Future plan for this tool is to add AWS S3 integration for auto-upload
