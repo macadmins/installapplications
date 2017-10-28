@@ -24,25 +24,21 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 1. MDM will send a push request utilizing `InstallApplication` to inform the device of a package installation.
 2. InstallApplications (this tool) will install and load it's LaunchDaemon.
 2. InstallApplications (this tool) will install and load it's LaunchAgent if in the proper context (installed outside of SetupAssistant).
-3. InstallApplications will begin to install your prestage packages (if configured) during the SetupAssistant.
-4. If stage1 packages are configured, InstallApplications will wait until the user is in their active session before installing.
-5. If stage 2 packages are configured, InstallApplications will install these packages during the user session.
+3. InstallApplications will begin to install your setupassistant packages (if configured) during the SetupAssistant.
+4. If userland packages are configured, InstallApplications will wait until the user is in their active session before installing.
 6. InstallApplications will gracefully exit and kill it's process.
 
 ## Stages
-There are currently three stages of packages:
-#### prestage ####
+There are currently two stages of packages:
+#### setupassitant ####
 - Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
-#### stage1 ####
+#### userland ####
 - Packages/rootscripts/userscripts that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
-#### stage2 ####
-- Packages/rootscripts/userscripts that need to be installed, but are not needed immediately.
-- stage2 begins immediately after the conclusion of stage1.
 
-By utilizing prestage/stage1, you can have **almost instant UI notifications** for your users.
+By utilizing setupassistant/userland, you can have **almost instant UI notifications** for your users.
 
 ## Notes
-- InstallApplications will only begin installing stage1 when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
+- InstallApplications will only begin installing userland when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
 
 ### Signing
 You will **NEED** to sign this package for use with DEP/MDM. To acquire a signing certificate, join the [Apple Developers Program](https://developer.apple.com).
@@ -62,7 +58,7 @@ InstallApplications can now handle downloading and running scripts. Please see b
 For user scripts, you **must** set the folder path to the `userscripts` sub folder. This is due to the folder having world-wide permissions, allowing the LaunchAgent/User to delete the scripts when finished.
 
 ```json
-"file": "/Library/Application Support/installapplications/userscripts/stage1_exampleuserscript.py",
+"file": "/Library/Application Support/installapplications/userscripts/userland_exampleuserscript.py",
 ```
 
 ## Installing InstallApplications to another folder.
@@ -126,7 +122,7 @@ In the LaunchDaemon add the following:
 InstallApplications can work in conjunction with DEPNotify to automatically create and manipulate the progress bar.
 
 InstallApplications will do the following automatically:
- - Determine the progress bar based on the amount of packages in the json (excluding prestage)
+ - Determine the progress bar based on the amount of packages in the json (excluding setupassistant)
 
 #### Notes about argument behavior
 If you would like to pass more options to DEPNotify, simply pass string arguments exactly as they would be passed to DEPNotify. The `--depnotify` option can be passed an *unlimited* amount of arguments.
@@ -150,7 +146,7 @@ If you need additional arguments to pass to DEPNotify, add `DEPNotifyArguments:`
 installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app" "DEPNotifyArguments: -munki"
 ```
 
-InstallApplications will wait until `stage1` to open DEPNotify as the `prestage` is used for SetupAssistant.
+InstallApplications will wait until `userland` to open DEPNotify as the `setupassistant` is used for SetupAssistant.
 
 **By default** InstallApplications will create a `determinate` and show a status for each item in your stages. If you would like to skip this behavior, pass `DEPNotifySkipStatus` to the `--depnotify` options
 ```
@@ -205,51 +201,40 @@ The JSON structure is quite simple. You supply the following:
 The following is an example JSON:
 ```json
 {
-  "prestage": [
+  "setupassistant": [
     {
-      "file": "/Library/Application Support/installapplications/prestage.pkg",
-      "url": "https://domain.tld/prestage.pkg",
-      "packageid": "com.package.prestage",
+      "file": "/Library/Application Support/installapplications/setupassistant.pkg",
+      "url": "https://domain.tld/setupassistant.pkg",
+      "packageid": "com.package.setupassistant",
       "version": "1.0",
       "hash": "sha256 hash",
-      "name": "PreStage Package Name",
+      "name": "setupassistant Package Name",
       "type": "package"
     }
   ],
-  "stage1": [
+  "userland": [
     {
-      "file": "/Library/Application Support/installapplications/stage1.pkg",
-      "url": "https://domain.tld/stage1.pkg",
-      "packageid": "com.package.stage1",
+      "file": "/Library/Application Support/installapplications/userland.pkg",
+      "url": "https://domain.tld/userland.pkg",
+      "packageid": "com.package.userland",
       "version": "1.0",
       "hash": "sha256 hash",
       "name": "Stage 1 Package Name",
       "type": "package"
     },
     {
-      "file": "/Library/Application Support/installapplications/stage1_examplerootscript.py",
+      "file": "/Library/Application Support/installapplications/userland_examplerootscript.py",
       "hash": "sha256 hash",
       "name": "Example Script",
       "type": "rootscript",
-      "url": "https://domain.tld/stage1_examplerootscript.py"
+      "url": "https://domain.tld/userland_examplerootscript.py"
     },
     {
-      "file": "/Library/Application Support/installapplications/userscripts/stage1_exampleuserscript.py",
+      "file": "/Library/Application Support/installapplications/userscripts/userland_exampleuserscript.py",
       "hash": "sha256 hash",
       "name": "Example Script",
       "type": "userscript",
-      "url": "https://domain.tld/stage1_exampleuserscript.py"
-    }
-  ],
-  "stage2": [
-    {
-      "file": "/Library/Application Support/installapplications/stage2.pkg",
-      "url": "https://domain.tld/stage2.pkg",
-      "packageid": "com.package.stage2",
-      "version": "1.0",
-      "hash": "sha256 hash",
-      "name": "Stage 2 Package Name",
-      "type": "package"
+      "url": "https://domain.tld/userland_exampleuserscript.py"
     }
   ]
 }
@@ -266,13 +251,11 @@ In order to do this, simply organize your packages in lowercase directories in a
 ```
 .
 ├── rootdir
-│   ├── prestage
-│   │   └── prestage.pkg
-│   ├── stage1
-│   │   └── stage1.pkg
-│   └── stage2
-│   │   └── stage2_1.pkg
-│   │   └── stage2_2.pkg
+│   ├── setupassistant
+│   │   └── setupassistant.pkg
+│   ├── userland
+│   │   └── userland.py
+│   │   └── userland.pkg
 ```
 
 Then run the tool:
