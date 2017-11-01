@@ -69,7 +69,7 @@ def main():
             else:
                 fileurl = ''
             filejson = {'file':
-                        '/private/tmp/installapplications/%s' % filename,
+                        '/Library/Application Support/installapplications/%s' % filename,
                         'url': fileurl, 'hash': str(filehash),
                         'name': filename}
             if fileext == '.pkg':
