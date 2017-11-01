@@ -174,7 +174,7 @@ Please note that `DEPNotifyPath` and `DEPNotifyArguments` are custom options for
 ### Logging
 All root actions are logged at `/private/var/log/installapplications.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
 
-All root actions are logged at `/var/tmp/installapplications/installapplications.user.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
+All user actions are logged at `/var/tmp/installapplications/installapplications.user.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
 
 ### Building a package
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
