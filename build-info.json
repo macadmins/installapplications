@@ -6,7 +6,7 @@
     "ownership": "recommended",
     "postinstall_action": "none",
     "signing_info": {
-        "identity": "YOUR IDENTITY FROM LOGIN KEYCHAIN",
+        "identity": "Mac Installer: Erik Gomez (XXXXXXXXXXX)",
         "timestamp": true
     },
     "suppress_bundle_relocation": true,

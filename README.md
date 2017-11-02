@@ -47,10 +47,14 @@ Open the `build-info.json` file and specify your signing certificate.
 
 ```json
 "signing_info": {
-    "identity": "YOUR IDENTITY FROM LOGIN KEYCHAIN",
+    "identity": "Mac Installer: Erik Gomez (XXXXXXXXXXX)",
     "timestamp": true
 },
 ```
+
+Note that you cannot use a `Mac Developer:` signing identity as that is used for application signing and not package signing. Attempting to use this will result in the following error:
+
+`An installer signing identity (not an application signing identity) is required for signing flat-style products.)`
 
 ### Downloading and running scripts
 InstallApplications can now handle downloading and running scripts. Please see below for how to specify the json structure.
