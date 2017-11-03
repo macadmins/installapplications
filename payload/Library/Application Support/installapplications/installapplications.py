@@ -422,6 +422,13 @@ def main():
     else:
         iaslog('No JSON URL specified!')
         sys.exit(1)
+    
+    # json data for gurl download
+    json_data = {
+            'url': jsonurl,
+            'file': jsonpath,
+            'name': 'Bootstrap.json'
+        }
 
     # Grab auth headers if they exist and update the json_data dict.
     if opts.headers:
@@ -433,13 +440,6 @@ def main():
         os.makedirs(iapath)
     except Exception:
         pass
-
-    # json data for gurl download
-    json_data = {
-            'url': jsonurl,
-            'file': jsonpath,
-            'name': 'Bootstrap.json'
-        }
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
