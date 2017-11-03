@@ -423,11 +423,6 @@ def main():
         iaslog('No JSON URL specified!')
         sys.exit(1)
 
-    # Grab auth headers if they exist and update the json_data dict.
-    if opts.headers:
-        headers = {'Authorization': opts.headers}
-        json_data.update({'additional_headers': headers})
-
     # Make the temporary folder
     try:
         os.makedirs(iapath)
@@ -440,6 +435,11 @@ def main():
             'file': jsonpath,
             'name': 'Bootstrap.json'
         }
+    
+    # Grab auth headers if they exist and update the json_data dict.
+    if opts.headers:
+        headers = {'Authorization': opts.headers}
+        json_data.update({'additional_headers': headers})
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
