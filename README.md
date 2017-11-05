@@ -30,7 +30,7 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 
 ## Stages
 There are currently two stages of packages:
-#### setupassitant ####
+#### setupassistant ####
 - Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
 #### userland ####
 - Packages/rootscripts/userscripts that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
