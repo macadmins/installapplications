@@ -502,12 +502,23 @@ def main():
                             os.makedirs(mlogpath, 0755)
                         if not os.path.isfile(mlogfile):
                             touch(mlogfile)
-                    depnotifystring = 'depnotifycmd = ' \
-                        """['/usr/bin/open', '""" + depnotifypath + "', '" + \
-                        '--args' + """', '""" + depnotifyarguments + "']"
+                    if len(depnotifyarguments) >= 2:
+                        totalarguments = []
+                        splitarguments = depnotifyarguments.split(' ')
+                        for x in splitarguments:
+                            totalarguments.append(x)
+                        depnotifystring = 'depnotifycmd = ' \
+                            """['/usr/bin/open', '""" + depnotifypath + "', '"\
+                            + '--args' + "', '" + \
+                            """', '""".join(map(str, totalarguments)) + "']"
+                    else:
+                        depnotifystring = 'depnotifycmd = ' \
+                            """['/usr/bin/open', '""" + depnotifypath + "', '"\
+                            + '--args' + """', '""" + depnotifyarguments + "']"
                 else:
                     depnotifystring = 'depnotifycmd = ' \
                         """['/usr/bin/open', '""" + depnotifypath + "']"
+                iaslog('Launching DEPNotify with: %s' % (depnotifystring))
                 depnotifyscript = "#!/usr/bin/python"
                 depnotifyscript += '\n' + "import subprocess"
                 depnotifyscript += '\n' + depnotifystring
