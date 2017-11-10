@@ -152,6 +152,12 @@ installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app" "DEPN
 
 InstallApplications will wait until `userland` to open DEPNotify as the `setupassistant` is used for SetupAssistant.
 
+You can also pass unlimited arguments to DEPNotify.
+
+```
+installapplications.py --depnotify "DEPNotifyPath: /path/to/DEPNotify.app" "DEPNotifyArguments: -munki -fullScreen"
+```
+
 **By default** InstallApplications will create a `determinate` and show a status for each item in your stages. If you would like to skip this behavior, pass `DEPNotifySkipStatus` to the `--depnotify` options
 ```
 installapplications.py --depnotify "DEPNotifySkipStatus"`

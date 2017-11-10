@@ -24,6 +24,7 @@
 		<!-- <string>Command: WindowStyle: ActivateOnStep</string> -->
 		<!-- <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string> -->
 		<!-- <string>DEPNotifyArguments: -munki</string> -->
+		<!-- <string>DEPNotifyArguments: -munki -fullScreen</string> -->
 		<!-- <string>--reboot</string> -->
 	</array>
 	<key>RunAtLoad</key>
