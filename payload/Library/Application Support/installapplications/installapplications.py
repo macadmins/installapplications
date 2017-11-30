@@ -38,6 +38,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib
 sys.path.append('/usr/local/installapplications')
 # PEP8 can really be annoying at times.
 import gurl  # noqa
@@ -268,6 +269,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
     path = item['file']
     name = item['name']
     hash = item['hash']
+    itemurl = item['url']
     while not (os.path.isfile(path) and hash == gethash(path)):
         # Check if additional headers are being passed and add
         # them to the dictionary.
@@ -275,7 +277,8 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
             item.update({'additional_headers':
                          {'Authorization': opts.headers}})
         # Download the file once:
-        iaslog('Starting download: %s' % (item['url']))
+        iaslog('Starting download: %s' % (urllib.unquote(itemurl.decode('utf8')
+                                                         )))
         if opts.depnotify:
             if stage == 'setupassistant':
                 iaslog(
@@ -435,7 +438,7 @@ def main():
             'file': jsonpath,
             'name': 'Bootstrap.json'
         }
-    
+
     # Grab auth headers if they exist and update the json_data dict.
     if opts.headers:
         headers = {'Authorization': opts.headers}
@@ -443,7 +446,8 @@ def main():
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
-        iaslog('Starting download: %s' % (json_data['url']))
+        iaslog('Starting download: %s' % (urllib.unquote(
+            json_data['url']).decode('utf8')))
         downloadfile(json_data)
         time.sleep(0.5)
 
