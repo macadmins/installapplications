@@ -3,7 +3,7 @@
 
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
-## MDM's that support Custom DEP
+## MDMs that support Custom DEP
 - AirWatch
 - FileWave (please contact them for instructions)
 - MicroMDM
@@ -22,11 +22,11 @@ Jamf Pro would install the `jamf` binary first, rather than InstallApplications.
 During a DEP SetupAssistant workflow (with a supported MDM), the following will happen:
 
 1. MDM will send a push request utilizing `InstallApplication` to inform the device of a package installation.
-2. InstallApplications (this tool) will install and load it's LaunchDaemon.
-2. InstallApplications (this tool) will install and load it's LaunchAgent if in the proper context (installed outside of SetupAssistant).
+2. InstallApplications (this tool) will install and load its LaunchDaemon.
+2. InstallApplications (this tool) will install and load its LaunchAgent if in the proper context (installed outside of SetupAssistant).
 3. InstallApplications will begin to install your setupassistant packages (if configured) during the SetupAssistant.
 4. If userland packages are configured, InstallApplications will wait until the user is in their active session before installing.
-6. InstallApplications will gracefully exit and kill it's process.
+6. InstallApplications will gracefully exit and kill its process.
 
 ## Stages
 There are currently two stages of packages:
@@ -66,7 +66,7 @@ For user scripts, you **must** set the folder path to the `userscripts` sub fold
 ```
 
 ## Installing InstallApplications to another folder.
-If you need to install IA's to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
+If you need to install IAs to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
 
 ```xml
 <string>--iapath</string>
