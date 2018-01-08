@@ -369,8 +369,11 @@ def main():
             print 'InstallApplications requires root!'
             sys.exit(1)
     else:
-        iaslog('No JSON URL specified!')
-        sys.exit(1)
+        if opts.userscript:
+            pass
+        else:
+            iaslog('No JSON URL specified!')
+            sys.exit(1)
 
     # Begin logging events
     iaslog('Beginning InstallApplications run')
@@ -387,13 +390,6 @@ def main():
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
     iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
     depnotifystatus = True
-
-    # Ensure the directories exist
-    if not os.path.isdir(iauserscriptpath):
-        for path in [iauserscriptpath, iatmppath]:
-            if not os.path.isdir(path):
-                os.makedirs(path)
-                os.chmod(path, 0777)
 
     # hardcoded json fileurl path
     jsonpath = os.path.join(iapath, 'bootstrap.json')
@@ -464,7 +460,7 @@ def main():
     iajson = json.loads(open(jsonpath).read())
 
     # Set the stages
-    stages = ['setupassistant', 'userland']
+    stages = ['preflight', 'setupassistant', 'userland']
 
     # Get the number of items for DEPNotify
     if opts.depnotify:
