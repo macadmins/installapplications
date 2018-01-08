@@ -324,6 +324,39 @@ def touch(path):
         return None
 
 
+def cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot):
+    # Attempt to remove the LaunchDaemon
+    iaslog('Attempting to remove LaunchDaemon: ' + ialdpath)
+    try:
+        os.remove(ialdpath)
+    except:  # noqa
+        pass
+
+    # Attempt to remove the LaunchAgent
+    iaslog('Attempting to remove LaunchAgent: ' + ialapath)
+    try:
+        os.remove(ialapath)
+    except:  # noqa
+        pass
+
+    # Attempt to remove the launchagent from the user's list
+    iaslog('Targeting user for LaunchAgent removal: ' + consoleuser)
+    iaslog('Attempting to remove LaunchAgent: ' + laidentifier)
+    launchctl('/bin/launchctl', 'asuser', consoleuser,
+              '/bin/launchctl', 'remove', laidentifier)
+
+    # Attempt to kill InstallApplications' path
+    iaslog('Attempting to remove InstallApplications directory: ' + iapath)
+    try:
+        shutil.rmtree(iapath)
+    except:  # noqa
+        pass
+
+    if not reboot:
+        iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
+        launchctl('/bin/launchctl', 'remove', ldidentifier)
+
+
 def main():
     # Options
     usage = '%prog [options]'
@@ -629,25 +662,6 @@ def main():
                     iaslog('Waiting for user script to complete: %s' % (path))
                     time.sleep(0.5)
 
-    # Kill the launchdaemon and agent
-    try:
-        os.remove(ialdpath)
-    except:  # noqa
-        pass
-    try:
-        os.remove(ialapath)
-    except:  # noqa
-        pass
-    iaslog('Removing LaunchAgent from launchctl list: ' + opts.laidentifier)
-    launchctl('/bin/launchctl', 'asuser', str(getconsoleuser()[1]),
-              '/bin/launchctl', 'remove', opts.laidentifier)
-
-    # Kill the bootstrap path.
-    try:
-        shutil.rmtree(iapath)
-    except:  # noqa
-        pass
-
     # Trigger the final DEPNotify events
     if opts.depnotify:
         for varg in opts.depnotify:
@@ -659,13 +673,13 @@ def main():
                 iaslog(
                     'Skipping DEPNotify notification event due to completion.')
 
-    # Trigger a reboot
-    if opts.reboot:
+    # Cleanup and trigger a reboot if required.
+    user = str(getconsoleuser()[1])
+    reboot = opts.reboot
+    cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot)
+
+    if reboot:
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
-    else:
-        iaslog(
-            'Removing LaunchDaemon from launchctl list: ' + opts.ldidentifier)
-        launchctl('/bin/launchctl', 'remove', opts.ldidentifier)
 
 
 if __name__ == '__main__':
