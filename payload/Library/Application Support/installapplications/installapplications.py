@@ -660,6 +660,7 @@ def main():
                         else:
                             iaslog('Preflight did not pass all checks. '
                                    'Continuing run.')
+                            continue
 
                 runrootscript(path, donotwait)
             elif type == 'userscript':
