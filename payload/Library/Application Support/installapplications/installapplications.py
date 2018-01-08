@@ -640,10 +640,20 @@ def main():
                 if opts.depnotify:
                     if depnotifystatus:
                         deplog('Status: Installing: %s' % (name))
-                if donotwait:
-                    runrootscript(path, True)
-                else:
-                    runrootscript(path, False)
+                if stage == 'preflight':
+                    currentuser = getconsoleuser()[0]
+                    # If at the loginwindow, assume new machine.
+                    if (currentuser is None or currentuser == u'loginwindow'
+                            or currentuser == u'_mbsetupuser'):
+                        continue
+                    else:
+                        preflightrun = runrootscript(path, donotwait)
+                        if preflightrun:
+                            user = str(getconsoleuser()[1])
+                            cleanup(ialdpath, ldidentifier, ialapath,
+                                    laidentifier, user, reboot)
+
+                runrootscript(path, donotwait)
             elif type == 'userscript':
                 if stage == 'setupassistant':
                     iaslog('Detected setupassistant and user script. \
