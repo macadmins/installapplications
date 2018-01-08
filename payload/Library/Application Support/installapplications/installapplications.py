@@ -383,9 +383,11 @@ def main():
     iauserscriptpath = os.path.join(iapath, 'userscripts')
     iatmppath = '/var/tmp/installapplications'
     iaslog('InstallApplications path: ' + str(iapath))
+    ldidentifier = opts.ldidentifier
     ldidentifierplist = opts.ldidentifier + '.plist'
     ialdpath = os.path.join('/Library/LaunchDaemons', ldidentifierplist)
     iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
+    laidentifier = opts.laidentifier
     laidentifierplist = opts.laidentifier + '.plist'
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
     iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
