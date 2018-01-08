@@ -16,6 +16,9 @@ import json
 import optparse
 import os
 import sys
+import subprocess
+import tempfile
+from xml.dom import minidom
 
 
 def gethash(filename):
@@ -31,6 +34,63 @@ def gethash(filename):
         hash_function.update(chunk)
     fileref.close()
     return hash_function.hexdigest()
+
+
+def getpkginfopath(filename):
+    '''Extracts the package BOM with xar'''
+    cmd = ['/usr/bin/xar', '-tf', filename]
+    proc = subprocess.Popen(cmd,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    (bom, err) = proc.communicate()
+    bom = bom.strip().split('\n')
+    if proc.returncode == 0:
+        for entry in bom:
+            if entry.startswith('PackageInfo'):
+                return entry
+            elif entry.endswith('.pkg/PackageInfo'):
+                return entry
+    else:
+        print "Error: %s while extracting BOM for %s" % (err, filename)
+
+
+def extractpkginfo(filename):
+    '''Takes input of a file path and returns a file path to the
+    extracted PackageInfo file.'''
+    cwd = os.getcwd()
+
+    if not os.path.isfile(filename):
+        return
+    else:
+        tmpFolder = tempfile.mkdtemp()
+        os.chdir(tmpFolder)
+        # need to get path from BOM
+        pkgInfoPath = getpkginfopath(filename)
+
+        extractedPkgInfoPath = os.path.join(tmpFolder, pkgInfoPath)
+        cmd = ['/usr/bin/xar', '-xf', filename, pkgInfoPath]
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        os.chdir(cwd)
+        return extractedPkgInfoPath
+
+
+def getpkginfo(filename):
+    '''Takes input of a file path and returns strings of the
+    package identifier and version from PackageInfo.'''
+    if not os.path.isfile(filename):
+        return "", ""
+
+    else:
+        pkgInfoPath = extractpkginfo(filename)
+        dom = minidom.parse(pkgInfoPath)
+        pkgRefs = dom.getElementsByTagName('pkg-info')
+        for ref in pkgRefs:
+            pkgId = ref.attributes['identifier'].value.encode('UTF-8')
+            pkgVersion = ref.attributes['version'].value.encode('UTF-8')
+            return pkgId, pkgVersion
 
 
 def main():
@@ -73,9 +133,10 @@ def main():
                         'url': fileurl, 'hash': str(filehash),
                         'name': filename}
             if fileext == '.pkg':
+                (pkgid, pkgversion) = getpkginfo(filepath)
                 filejson['type'] = 'package'
-                filejson['packageid'] = ''
-                filejson['version'] = ''
+                filejson['packageid'] = pkgid
+                filejson['version'] = pkgversion
                 stages[filestage].append(filejson)
             else:
                 filejson['type'] = 'rootscript'
