@@ -281,9 +281,8 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
                                                          )))
         if opts.depnotify:
             if stage == 'setupassistant':
-                iaslog(
-                    'Skipping DEPNotify notification due to \
-                    setupassistant.')
+                iaslog('Skipping DEPNotify notification due to setupassistant.'
+                       )
             else:
                 if depnotifystatus:
                     deplog('Status: Downloading %s' % (name))
@@ -294,13 +293,12 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         # correct. Bail after three times and log event.
         failsleft = 3
         while not hash == gethash(path):
-            iaslog('Hash failed for %s - received: %s expected\
-                   : %s' % (name, gethash(path), hash))
+            iaslog('Hash failed for %s - received: %s expected'
+                   ': %s' % (name, gethash(path), hash))
             downloadfile(item)
             failsleft -= 1
             if failsleft == 0:
-                iaslog('Hash retry failed for %s: exiting!\
-                       ' % name)
+                iaslog('Hash retry failed for %s: exiting!' % name)
                 sys.exit(1)
         # Time to install.
         iaslog('Hash validated - received: %s expected: %s' % (
@@ -539,8 +537,8 @@ def main():
                 while (getconsoleuser()[0] is None
                        or getconsoleuser()[0] == u'loginwindow'
                        or getconsoleuser()[0] == u'_mbsetupuser'):
-                    iaslog('Detected SetupAssistant in userland stage - \
-                           delaying DEPNotify launch until user session.')
+                    iaslog('Detected SetupAssistant in userland stage - '
+                           'delaying DEPNotify launch until user session.')
                     time.sleep(1)
                 iaslog('Creating DEPNotify Launcher')
                 depnotifyscriptpath = os.path.join(
@@ -616,16 +614,16 @@ def main():
                             while (getconsoleuser()[0] is None
                                    or getconsoleuser()[0] == u'loginwindow'
                                    or getconsoleuser()[0] == u'_mbsetupuser'):
-                                iaslog('Detected SetupAssistant in userland \
-                                       stage - delaying install until user \
-                                       session.')
+                                iaslog('Detected SetupAssistant in userland '
+                                       'stage - delaying install until user '
+                                       'session.')
                                 time.sleep(1)
                     iaslog('Installing %s from %s' % (name, path))
                     if opts.depnotify:
                         if stage == 'setupassistant':
                             iaslog(
-                                'Skipping DEPNotify notification due to \
-                                setupassistant.')
+                                'Skipping DEPNotify notification due to '
+                                'setupassistant.')
                         else:
                             if depnotifystatus:
                                 deplog('Status: Installing: %s' % (name))
@@ -665,9 +663,9 @@ def main():
                 runrootscript(path, donotwait)
             elif type == 'userscript':
                 if stage == 'setupassistant':
-                    iaslog('Detected setupassistant and user script. \
-                          User scripts cannot work in setupassistant stage! \
-                          Removing %s') % path
+                    iaslog('Detected setupassistant and user script. '
+                           'User scripts cannot work in setupassistant stage! '
+                           'Removing %s') % path
                     os.remove(path)
                     pass
                 if 'url' in item:
