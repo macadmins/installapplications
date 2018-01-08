@@ -646,6 +646,8 @@ def main():
                     # If at the loginwindow, assume new machine.
                     if (currentuser is None or currentuser == u'loginwindow'
                             or currentuser == u'_mbsetupuser'):
+                        iaslog('Device is at the loginwindow. Skipping '
+                               'preflight check')
                         continue
                     else:
                         preflightrun = runrootscript(path, donotwait)
