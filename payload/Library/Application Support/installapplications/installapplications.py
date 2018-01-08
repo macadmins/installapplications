@@ -340,7 +340,7 @@ def cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot):
         pass
 
     # Attempt to remove the launchagent from the user's list
-    iaslog('Targeting user for LaunchAgent removal: ' + consoleuser)
+    iaslog('Targeting user id for LaunchAgent removal: ' + consoleuser)
     iaslog('Attempting to remove LaunchAgent: ' + laidentifier)
     launchctl('/bin/launchctl', 'asuser', consoleuser,
               '/bin/launchctl', 'remove', laidentifier)
