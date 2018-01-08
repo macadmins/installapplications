@@ -359,6 +359,17 @@ def main():
         global g_dry_run
         g_dry_run = True
 
+    # Check for root and json url.
+    if opts.jsonurl:
+        jsonurl = opts.jsonurl
+        if not g_dry_run and (os.getuid() != 0):
+            print opts.skip_validation
+            print 'InstallApplications requires root!'
+            sys.exit(1)
+    else:
+        iaslog('No JSON URL specified!')
+        sys.exit(1)
+
     # Begin logging events
     iaslog('Beginning InstallApplications run')
 
@@ -415,16 +426,6 @@ def main():
             else:
                 iaslog('Sending %s to DEPNotify' % (str(notification)))
                 deplog(notification)
-
-    # Check for root and json url.
-    if opts.jsonurl:
-        jsonurl = opts.jsonurl
-        if not g_dry_run and (os.getuid() != 0):
-            print 'InstallApplications requires root!'
-            sys.exit(1)
-    else:
-        iaslog('No JSON URL specified!')
-        sys.exit(1)
 
     # Make the temporary folder
     try:
