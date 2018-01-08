@@ -425,6 +425,7 @@ def main():
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
     iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
     depnotifystatus = True
+    reboot = opts.reboot
 
     # hardcoded json fileurl path
     jsonpath = os.path.join(iapath, 'bootstrap.json')
@@ -675,7 +676,6 @@ def main():
 
     # Cleanup and trigger a reboot if required.
     user = str(getconsoleuser()[1])
-    reboot = opts.reboot
     cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot)
 
     if reboot:
