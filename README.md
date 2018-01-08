@@ -29,7 +29,15 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 6. InstallApplications will gracefully exit and kill its process.
 
 ## Stages
-There are currently two stages of packages:
+There are currently three stages:
+#### preflight ####
+This stage is designed to only work with a **single rootscript**. This stage is useful for running InstallApplications on previously deployed machines or if you simply want to re-run it.
+
+If the preflight script exits 0, InstallApplications will cleanup/remove itself, bypassing the setupassistant and userland stages.
+
+If the preflight script exits 1 or higher, InstallApplications will continue with the bootstrap process.
+
+Please note that the preflight stage will be skipped if InstallApplications is running at the loginwindow.
 #### setupassistant ####
 - Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
 #### userland ####
