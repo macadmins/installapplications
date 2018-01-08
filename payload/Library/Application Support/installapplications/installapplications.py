@@ -348,6 +348,9 @@ def main():
                  help=('Optional: Trigger a reboot.'), action='store_true')
     o.add_option('--dry-run', help=('Optional: Dry run (for testing).'),
                  action='store_true')
+    o.add_option('--skip-validation', default=False,
+                 help=('Optional: Skip bootstrap.json validation.'),
+                 action='store_true')
     o.add_option('--userscript', default=None,
                  help=('Optional: Trigger a user script run.'),
                  action='store_true')
@@ -363,7 +366,6 @@ def main():
     if opts.jsonurl:
         jsonurl = opts.jsonurl
         if not g_dry_run and (os.getuid() != 0):
-            print opts.skip_validation
             print 'InstallApplications requires root!'
             sys.exit(1)
     else:
@@ -444,6 +446,12 @@ def main():
     if opts.headers:
         headers = {'Authorization': opts.headers}
         json_data.update({'additional_headers': headers})
+
+    # Delete the bootstrap file if it exists, to ensure it's up to date.
+    if not opts.skip_validation:
+        if os.path.isfile(jsonpath):
+            iaslog('Removing and redownloading bootstrap.json')
+            os.remove(jsonpath)
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
