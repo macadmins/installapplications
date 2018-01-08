@@ -226,7 +226,7 @@ def runrootscript(pathname, donotwait):
                 iaslog('Output from %s on stderr but ran successfully: %s' %
                        (pathname, err))
             elif proc.returncode > 0:
-                iaslog('Failure running script: ' + str(err))
+                iaslog('Received non-zero exit code: ' + str(err))
                 return False
     except OSError as err:
         iaslog('Failure running script: ' + str(err))
