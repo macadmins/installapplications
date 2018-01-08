@@ -408,6 +408,13 @@ def main():
             iaslog('Failed to run script!')
             sys.exit(1)
 
+    # Ensure the directories exist
+    if not os.path.isdir(iauserscriptpath):
+        for path in [iauserscriptpath, iatmppath]:
+            if not os.path.isdir(path):
+                os.makedirs(path)
+                os.chmod(path, 0777)
+
     # DEPNotify trigger commands that need to happen at the end of a run
     deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
                    'DEPNotifyPath', 'DEPNotifyArguments',
