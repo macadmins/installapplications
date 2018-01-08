@@ -324,7 +324,8 @@ def touch(path):
         return None
 
 
-def cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot):
+def cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
+            reboot):
     # Attempt to remove the LaunchDaemon
     iaslog('Attempting to remove LaunchDaemon: ' + ialdpath)
     try:
@@ -340,9 +341,9 @@ def cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot):
         pass
 
     # Attempt to remove the launchagent from the user's list
-    iaslog('Targeting user id for LaunchAgent removal: ' + consoleuser)
+    iaslog('Targeting user id for LaunchAgent removal: ' + userid)
     iaslog('Attempting to remove LaunchAgent: ' + laidentifier)
-    launchctl('/bin/launchctl', 'asuser', consoleuser,
+    launchctl('/bin/launchctl', 'asuser', userid,
               '/bin/launchctl', 'remove', laidentifier)
 
     # Attempt to kill InstallApplications' path
@@ -355,6 +356,8 @@ def cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot):
     if not reboot:
         iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
         launchctl('/bin/launchctl', 'remove', ldidentifier)
+        iaslog('Cleanup done. Exiting.')
+        sys.exit(0)
 
 
 def main():
@@ -649,9 +652,14 @@ def main():
                     else:
                         preflightrun = runrootscript(path, donotwait)
                         if preflightrun:
-                            user = str(getconsoleuser()[1])
-                            cleanup(ialdpath, ldidentifier, ialapath,
-                                    laidentifier, user, reboot)
+                            iaslog('Preflight passed all checks. Skipping run.'
+                                   )
+                            userid = str(getconsoleuser()[1])
+                            cleanup(iapath, ialdpath, ldidentifier, ialapath,
+                                    laidentifier, userid, reboot)
+                        else:
+                            iaslog('Preflight did not pass all checks. '
+                                   'Continuing run.')
 
                 runrootscript(path, donotwait)
             elif type == 'userscript':
@@ -685,10 +693,12 @@ def main():
                     'Skipping DEPNotify notification event due to completion.')
 
     # Cleanup and trigger a reboot if required.
-    user = str(getconsoleuser()[1])
-    cleanup(ialdpath, ldidentifier, ialapath, laidentifier, user, reboot)
+    userid = str(getconsoleuser()[1])
+    cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
+            reboot)
 
     if reboot:
+        iaslog('Triggering reboot')
         subprocess.call(['/sbin/shutdown', '-r', 'now'])
 
 
