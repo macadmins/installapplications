@@ -344,7 +344,7 @@ def main():
     o.add_option('--laidentifier',
                  default='com.erikng.installapplications',
                  help=('Optional: Specify LaunchAgent identifier.'))
-    o.add_option('--reboot', default=None,
+    o.add_option('--reboot', default=False,
                  help=('Optional: Trigger a reboot.'), action='store_true')
     o.add_option('--dry-run', help=('Optional: Dry run (for testing).'),
                  action='store_true')
