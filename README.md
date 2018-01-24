@@ -223,6 +223,16 @@ The JSON structure is quite simple. You supply the following:
 The following is an example JSON:
 ```json
 {
+  "preflight": [
+    {
+      "donotwait": false,
+      "file": "/Library/Application Support/installapplications/preflight_script.py",
+      "hash": "sha256 hash",
+      "name": "Example Preflight Script",
+      "type": "rootscript",
+      "url": "https://domain.tld/preflight_script.py"
+    }
+  ], 
   "setupassistant": [
     {
       "file": "/Library/Application Support/installapplications/setupassistant.pkg",
