@@ -36,8 +36,6 @@ This stage is designed to only work with a **single rootscript**. This stage is 
 If the preflight script exits 0, InstallApplications will cleanup/remove itself, bypassing the setupassistant and userland stages.
 
 If the preflight script exits 1 or higher, InstallApplications will continue with the bootstrap process.
-
-Please note that the preflight stage will be skipped if InstallApplications is running at the loginwindow.
 #### setupassistant ####
 - Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
 #### userland ####
@@ -225,6 +223,16 @@ The JSON structure is quite simple. You supply the following:
 The following is an example JSON:
 ```json
 {
+  "preflight": [
+    {
+      "donotwait": false,
+      "file": "/Library/Application Support/installapplications/preflight_script.py",
+      "hash": "sha256 hash",
+      "name": "Example Preflight Script",
+      "type": "rootscript",
+      "url": "https://domain.tld/preflight_script.py"
+    }
+  ], 
   "setupassistant": [
     {
       "file": "/Library/Application Support/installapplications/setupassistant.pkg",

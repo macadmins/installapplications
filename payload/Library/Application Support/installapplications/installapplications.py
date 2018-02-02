@@ -642,25 +642,17 @@ def main():
                     if depnotifystatus:
                         deplog('Status: Installing: %s' % (name))
                 if stage == 'preflight':
-                    currentuser = getconsoleuser()[0]
-                    # If at the loginwindow, assume new machine.
-                    if (currentuser is None or currentuser == u'loginwindow'
-                            or currentuser == u'_mbsetupuser'):
-                        iaslog('Device is at the loginwindow. Skipping '
-                               'preflight check')
-                        continue
+                    preflightrun = runrootscript(path, donotwait)
+                    if preflightrun:
+                        iaslog('Preflight passed all checks. Skipping run.'
+                                )
+                        userid = str(getconsoleuser()[1])
+                        cleanup(iapath, ialdpath, ldidentifier, ialapath,
+                                laidentifier, userid, reboot)
                     else:
-                        preflightrun = runrootscript(path, donotwait)
-                        if preflightrun:
-                            iaslog('Preflight passed all checks. Skipping run.'
-                                   )
-                            userid = str(getconsoleuser()[1])
-                            cleanup(iapath, ialdpath, ldidentifier, ialapath,
-                                    laidentifier, userid, reboot)
-                        else:
-                            iaslog('Preflight did not pass all checks. '
-                                   'Continuing run.')
-                            continue
+                        iaslog('Preflight did not pass all checks. '
+                                'Continuing run.')
+                        continue
 
                 runrootscript(path, donotwait)
             elif type == 'userscript':
