@@ -609,9 +609,14 @@ def main():
             if type == 'package':
                 packageid = item['packageid']
                 version = item['version']
-                # Compare version of package with installed version
+                try:
+                    pkg_required = item['required']
+                except KeyError:
+                    pkg_required = False
+                # Compare version of package with installed version and ensure
+                # pkg is not a required install
                 if LooseVersion(checkreceipt(packageid)) >= LooseVersion(
-                        version):
+                        version) and not pkg_required:
                     iaslog('Skipping %s - already installed.' % (name))
                 else:
                     # Download the package if it isn't already on disk.
