@@ -513,7 +513,11 @@ def main():
             if stage == 'setupassistant':
                 iaslog('Skipping DEPNotify item count due to setupassistant.')
             else:
-                numberofitems += int(len(iajson[stage]))
+                # catch if there is a missing stage. mostly for preflight.
+                try:
+                    numberofitems += int(len(iajson[stage]))
+                except KeyError:
+                    iaslog('Malformed JSON - missing %s stage key' % stage)
         # Mulitply by two for download and installation status messages
         if depnotifystatus:
             deplog('Command: Determinate: %d' % (numberofitems*2))
@@ -521,6 +525,13 @@ def main():
     # Process all stages
     for stage in stages:
         iaslog('Beginning %s' % (stage))
+        if stage == 'preflight':
+            # Ensure we actually have a preflight key in the json
+            try:
+                iajson['preflight']
+            except KeyError:
+                iaslog('No preflight stage found: skipping.')
+                continue
         if stage == 'userland':
             # Open DEPNotify for the admin if they pass
             # condition.

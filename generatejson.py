@@ -142,6 +142,12 @@ def main():
                 filejson['type'] = 'rootscript'
                 stages[filestage].append(filejson)
 
+        # make sure that we have a preflight key
+        try:
+            stages['preflight']
+        except KeyError:
+            stages['preflight'] = []
+
     # Saving the file back in the root dir
     if opts.outputdir:
         savepath = os.path.join(opts.outputdir, 'bootstrap.json')
