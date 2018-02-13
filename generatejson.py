@@ -115,7 +115,7 @@ def main():
     for subdir, dirs, files in os.walk(rootdir):
         for d in dirs:
             stages[str(d)] = []
-        for file in files:
+        for file in sorted(files):
             fileext = os.path.splitext(file)[1]
             if fileext not in ('.pkg', '.py', '.sh', '.rb', '.php'):
                 continue
