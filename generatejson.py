@@ -116,6 +116,8 @@ def main():
         for d in dirs:
             stages[str(d)] = []
         for file in sorted(files):
+            if file.startswith('._'):
+                continue
             fileext = os.path.splitext(file)[1]
             if fileext not in ('.pkg', '.py', '.sh', '.rb', '.php'):
                 continue
