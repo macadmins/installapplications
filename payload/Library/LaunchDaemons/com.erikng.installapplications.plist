@@ -26,7 +26,7 @@
 		<!-- <string>DEPNotifyArguments: -munki</string> -->
 		<!-- <string>DEPNotifyArguments: -munki -fullScreen</string> -->
 		<!-- <string>--reboot</string> -->
-		<!-- <string>--skip-validation</string/> -->
+		<!-- <string>--skip-validation</string> -->
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
