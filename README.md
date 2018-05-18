@@ -105,7 +105,7 @@ If after installing all of your packages, you want to force a reboot, simply unc
 #### Optional Skip Bootstrap.json validation
 If you would like to pre-package your bootstrap.json file into your package and not download it, simply uncomment the flag in the launchdaemon plist.
 ```xml
-<string>--skip-validation</string/>
+<string>--skip-validation</string>
 ```
 
 #### Basic Auth
