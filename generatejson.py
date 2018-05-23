@@ -2,20 +2,24 @@
 # -*- coding: utf-8 -*-
 
 # Generate Json file for installapplications
-# Usage: python generatejson.py --rootdir /path/to/rootdir
+# Usage: python generatejson.py --item \
+# item-name='A name' \
+# item-path='A path' \
+# item-stage='A stage' \
+# item-type='A type' \
+# item-url='A url' \
+# script-do-not-wait='A boolean' \
+# --base-url URL \
+# --output PATH
+
 #
-# --rootdir path is the directory that contains each stage's pkgs directory
-# As of InstallApplications 7/18/17, the directories must be named (lowercase):
-#   'setupassistant', and 'userland'
-#
-# The generated Json will be saved in the root directory
+# --item can be used unlimited times
 # Future plan for this tool is to add AWS S3 integration for auto-upload
 
 import hashlib
 import json
-import optparse
+import argparse
 import os
-import sys
 import subprocess
 import tempfile
 from xml.dom import minidom
@@ -94,76 +98,143 @@ def getpkginfo(filename):
 
 
 def main():
-    usage = '%prog --rootdir <filepath>'
-    op = optparse.OptionParser(usage=usage)
-    op.add_option('--rootdir', help=(
-        'Required: Root directory path for InstallApplications stages'))
-    op.add_option('--outputdir', default=None, help=('Optional: Output \
-                  directory to save in. Default saves in the rootdir'))
-    op.add_option('--base-url', default=None, action='store',
-                  help=('Base URL to where root dir is hosted'))
-    opts, args = op.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--base-url', default=None, action='store',
+                        help='Required: Base URL to where root dir is hosted')
+    parser.add_argument('--output', default=None, action='store',
+                        help='Required: Output directory to save json')
+    parser.add_argument('--item', default=None, action='append', nargs=6,
+                        metavar=(
+                            'item-name', 'item-path', 'item-stage',
+                            'item-type', 'item-url', 'script-do-not-wait'),
+                        help='Required: Options for item. All items are \
+                        required. Scripts default to rootscript and stage \
+                        defaults to userland')
+    args = parser.parse_args()
 
-    if opts.rootdir:
-        rootdir = opts.rootdir
-    else:
-        op.print_help()
-        sys.exit(1)
+    # Bail if we don't have one item, the base url and the output dir
+    if not args.item or not args.base_url or not args.output:
+        parser.print_help()
+        exit(1)
 
-    # Traverse through root dir, find all stages and all pkgs to generate json
-    stages = {}
-    for subdir, dirs, files in os.walk(rootdir):
-        for d in dirs:
-            stages[str(d)] = []
-        for file in sorted(files):
-            if file.startswith('._'):
-                continue
-            fileext = os.path.splitext(file)[1]
-            if fileext not in ('.pkg', '.py', '.sh', '.rb', '.php'):
-                continue
-            filepath = os.path.join(subdir, file)
-            filename = os.path.basename(filepath)
-            filehash = gethash(filepath)
-            filestage = os.path.basename(os.path.abspath(
-                        os.path.join(filepath, os.pardir)))
-            if opts.base_url:
-                fileurl = '%s/%s/%s' % (opts.base_url, filestage, filename)
+    # Let's first loop through the items and convert everything to key value
+    # pairs
+    itemsToProcess = []
+    for item in args.item:
+        processedItem = {}
+        for itemOption in item:
+            values = itemOption.split('=')
+            processedItem[values[0]] = values[1]
+        itemsToProcess.append(processedItem)
+
+    # Create our stages now so InstallApplications won't blow up
+    stages = {
+        'preflight': [],
+        'setupassistant': [],
+        'userland': []
+    }
+
+    # Process each item in the order they were passed in
+    for item in itemsToProcess:
+        itemJson = {}
+        # Get the file extension of the file
+        fileExt = os.path.splitext(item['item-path'])[1]
+        # Get the file name of the file
+        fileName = os.path.basename(item['item-path'])
+        # Get the full path of the file
+        filePath = item['item-path']
+
+        # Determine the type of item to process - for scripts, default to
+        # rootscript
+        if fileExt in ('.py', '.sh', '.rb', '.php'):
+            if item['item-type']:
+                itemJson['type'] = itemType = item['item-type']
             else:
-                fileurl = ''
-            filejson = {'file':
-                        '/Library/Application Support/installapplications/%s' % filename,
-                        'url': fileurl, 'hash': str(filehash),
-                        'name': filename}
-            if fileext == '.pkg':
-                (pkgid, pkgversion) = getpkginfo(filepath)
-                filejson['type'] = 'package'
-                filejson['packageid'] = pkgid
-                filejson['version'] = pkgversion
-                stages[filestage].append(filejson)
+                itemJson['type'] = itemType = 'rootscript'
+        elif fileExt == '.pkg':
+            itemJson['type'] = itemType = 'package'
+        else:
+            print 'Could not determine package type for item or unsupported: \
+            %s' % str(item)
+            exit(1)
+        if itemType not in ('package', 'rootscript', 'userscript'):
+            print 'item-type malformed: %s' % str(item['item-type'])
+            exit(1)
+
+        # Determine the stage of the item to process - default to userland
+        if item['item-stage']:
+            if item['item-stage'] in ('preflight', 'setupassistant',
+                                      'userland'):
+                itemStage = item['item-stage']
+                pass
             else:
-                filejson['type'] = 'rootscript'
-                stages[filestage].append(filejson)
+                print 'item-stage malformed: %s' % str(item['item-stage'])
+                exit(1)
+        else:
+            itemStage = 'userland'
 
-        # make sure that we have a preflight key
-        try:
-            stages['preflight']
-        except KeyError:
-            stages['preflight'] = []
+        # Determine the url of the item to process - defaults to
+        # baseurl/stage/filename
+        if not item['item-url']:
+            itemJson['url'] = '%s/%s/%s' % (args.base_url, itemStage, fileName)
+        else:
+            itemJson['url'] = item['item-url']
 
-    # Saving the file back in the root dir
-    if opts.outputdir:
-        savepath = os.path.join(opts.outputdir, 'bootstrap.json')
+        # Determine the name of the item to process - defaults to the filename
+        if not item['item-name']:
+            itemJson['name'] = fileName
+        else:
+            itemJson['name'] = item['item-name']
+
+        # Determine the hash of the item to process - SHA256
+        itemJson['hash'] = gethash(filePath)
+
+        # Add information for scripts and packages
+        if itemType in ('rootscript', 'userscript'):
+            if itemType == 'userscript':
+                # Pass the userscripts folder path
+                itemJson['file'] = '/Library/Application Support/'\
+                    'installapplications/userscripts/%s' % fileName
+            else:
+                itemJson['file'] = '/Library/Application Support/'\
+                    'installapplications/%s' % fileName
+            # Check crappy way of doing booleans
+            if item['script-do-not-wait'] in ('true', 'True', '1',
+                                              'false', 'False', '0'):
+                # If True, pass the key to the item
+                if item['script-do-not-wait'] in ('true', 'True', '1'):
+                    itemJson['donotwait'] = True
+            else:
+                print 'script-do-not-wait malformed: %s ' % str(
+                    item['script-do-not-wait'])
+                exit(1)
+        # If packages, we need the version and packageid
+        elif itemType == 'package':
+            (pkgId, pkgVersion) = getpkginfo(filePath)
+            itemJson['file'] = '/Library/Application Support/'\
+                'installapplications/%s' % fileName
+            itemJson['packageid'] = pkgId
+            itemJson['version'] = pkgVersion
+
+        # Append the info to the appropriate stage
+        stages[itemStage].append(itemJson)
+
+    # Saving the json file to the output directory path
+    if args.output:
+        savePath = os.path.join(args.output, 'bootstrap.json')
     else:
-        savepath = os.path.join(rootdir, 'bootstrap.json')
+        savePath = os.path.join(rootdir, 'bootstrap.json')
 
+    # Sort the primary keys, but not the sub keys, so things are in the correct
+    # order
     try:
-        with open(savepath, 'w') as outfile:
-            json.dump(stages, outfile, sort_keys=True, indent=2)
+        with open(savePath, 'w') as outFile:
+            json.dump(stages, outFile, sort_keys=True, indent=2)
     except IOError:
-        print '[Error] Not a valid directory: %s' % savepath
-        sys.exit(1)
+        print '[Error] Not a valid directory: %s' % savePath
+        exit(1)
 
-    print 'Json saved to %s' % savepath
+    print 'Json saved to %s' % savePath
 
 
 if __name__ == '__main__':

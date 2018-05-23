@@ -232,7 +232,7 @@ The following is an example JSON:
       "type": "rootscript",
       "url": "https://domain.tld/preflight_script.py"
     }
-  ], 
+  ],
   "setupassistant": [
     {
       "file": "/Library/Application Support/installapplications/setupassistant.pkg",
@@ -279,22 +279,33 @@ You may have more than one package in each stage. Packages will be deployed in a
 ### Creating your JSON
 
 Using `generatejson.py` you can automatically generate the json with the file, hash, and name keys populated (you'll need to upload the packages to a server and update the url keys).
-In order to do this, simply organize your packages in lowercase directories in a "root directory" as shown below:
+
+You can pass an unlimited amount of `--item` arguments, but each one must have all six meta-variables. If you do not want to enter one of the meta-variables, simple pass a blank string `''`.
+
+Run the tool:
 ```
-.
-├── rootdir
-│   ├── setupassistant
-│   │   └── setupassistant.pkg
-│   ├── userland
-│   │   └── userland.py
-│   │   └── userland.pkg
+python generatejson.py --base-url https://github.com --output ~/Desktop \
+--item \
+item-name='preflight' \
+item-path='/localpath/preflight.py' \
+item-stage='preflight' \
+item-type='rootscript' \
+item-url='https://github.com/preflight/preflight.py' \
+script-do-not-wait=False \
+--item \
+item-name='setupassistant package' \
+item-path='/localpath/package.pkg' \
+item-stage='setupassistant' \
+item-type='package' \
+item-url='https://github.com/setupassistant/package.pkg' \
+script-do-not-wait=False \
+--item \
+item-name='userland user script' \
+item-path='/localpath/userscript.py' \
+item-stage='userland' \
+item-type='userscript' \
+item-url='https://github.com/userland/userscript.py' \
+script-do-not-wait=True \
 ```
 
-Then run the tool:
-```
-python generatejson.py --rootdir /path/to/rootdir
-```
-The bootstrap.json will be saved in the rootdir. If you want to save it elsewhere, use `--outputdir`:
-```
-python generatejson.py --rootdir /path/to/rootdir --outputdir /path/to/outputdir
-```
+The bootstrap.json will be saved in the directory specified with `--output`.
