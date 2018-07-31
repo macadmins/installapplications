@@ -309,3 +309,65 @@ script-do-not-wait=True \
 ```
 
 The bootstrap.json will be saved in the directory specified with `--output`.
+
+
+## Plugins
+
+This optional feature allows you to use third party code, or create your own code to process item information defined in bootstrap.json in any way you choose. The primary use case for this feature is to interact with MDM vendor API's to push packages, although it is not limited to that. Plugin functionality is activated by the presence of a Python file. If it's there it gets called, if it's not it won't, it's as simple as that.
+
+### Details
+
+A Plugin will be imported at runtime as a Python module so the plugin file must be written in Python. However, nothing is stopping you from then calling another executable from Python, so in that sense, you're not limited to Python.
+At the beginning of the InstallApplications run, InstallApplications searches for "plugin*.py", it then tries to import it then looks for the function, "process_item". The item information is then sent through for the plugin to process it in any way needed.
+
+You may only use one plugin file. If you have more than one plugin file you **will** have unpredictable results
+
+#### Defining an item to use the plugin in bootstrap.json
+
+To enable plugin functionality for an item, the bootstrap.json item dictionary requires just two keys, `name` and of `type` `plugin`. All other additional keys will also be passed along to the plugin in this dictionary:
+
+_Example_
+```json
+{
+	"name": "Example Item using Plugin",
+	"type": "plugin",
+	"mykey1": "myvalue1",
+	"mykey2": "myvalue2",
+	"myid": "1234"
+}
+```
+
+#### Requirements for the plugin
+
+For the plugin to work, you will need the following:
+
+##### Filename
+InstallApplications is looking for files that start with "plugin" and end with ".py". Examples of good and bad plugin filenames:
+
+- plugin.py👍
+- ~~plugin~~👎
+- ~~my_plugin.py~~👎
+- plugin_cloudfoo.py👍
+
+##### Location
+The plugin file must live in the same folder as InstallApplications (/Library/Application Support/InstallApplications/).
+
+##### Permissions
+Root must be the owner of the file and be able to read it. Since it's imported by Python, the executable part isn't necessary. It's important to note that if you plan on storing sensitive information inside you should restrict access.
+```bash
+sudo chown root /Library/Application\ Support/InstallApplications/plugin*.py
+sudo chmod 600 /Library/Application\ Support/InstallApplications/plugin*.py
+```
+
+##### The "process_item" function
+This is the function that InstallApplications is looking for. Think of it as the "main" function for the plugin. If InstallApplications doesn't find this function it will abandon the plugin, and continue on as if it wasn't there.
+
+_Example function_
+ ```python
+ def process_item(item):
+    print '***Processing: %s' % item.get('name')
+    return
+```
+This is a basic example: InstallApplications sends the defined item information, we print the item name and then complete the function with a simple return.
+
+`process_item` has a single input parameter: the item dictionary (defined in the bootstrap.json file). It does not need to return anything back, it just needs to break the function in some way so that InstallApplications can continue to the next item.

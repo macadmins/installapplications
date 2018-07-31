@@ -21,14 +21,16 @@
 # bootstrap to be completely dynamic and easily updateable.
 # downloadfile function taken from:
 # https://gist.github.com/gregneagle/1816b650df8e3fbeb18f
-# gurl.py and gethash function taken from:
+# gurl.py, gethash function, and import_plugin (middleware) taken from:
 # https://github.com/munki/munki
 # Notice a pattern?
 
 from distutils.version import LooseVersion
 from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
+import gurl  # noqa
 import hashlib
+import imp
 import json
 import optparse
 import os
@@ -39,12 +41,9 @@ import subprocess
 import sys
 import time
 import urllib
-sys.path.append('/usr/local/installapplications')
-# PEP8 can really be annoying at times.
-import gurl  # noqa
-
 
 g_dry_run = False
+plugin = None
 
 
 def deplog(text):
@@ -358,6 +357,39 @@ def cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
         sys.exit(0)
 
 
+def import_plugin():
+    # Thanks to authors of munkilib/fetch.py (middleware)
+    '''Check installapplications folder for a python file that starts with
+    plugin. If the file exists and has a callable 'process_item' attribute,
+    the module is loaded under the 'plugin' name'''
+    required_function_name = 'process_item'
+    ias_dir = os.path.abspath(os.path.dirname(__file__))
+    for filename in os.listdir(ias_dir):
+        if (filename.startswith('plugin')
+                and os.path.splitext(filename)[1] == '.py'):
+            name = os.path.splitext(filename)[0]
+            filepath = os.path.join(ias_dir, filename)
+            try:
+                _tmp = imp.load_source(name, filepath)
+                if hasattr(_tmp, required_function_name):
+                    if callable(getattr(_tmp, required_function_name)):
+                        iaslog('Loading plugin module %s' % filename)
+                        globals()['plugin'] = _tmp
+                        return
+                    else:
+                        iaslog('%s attribute in %s is not callable'
+                               % (required_function_name, filepath))
+                        iaslog('Ignoring %s' % filepath)
+                else:
+                    iaslog('%s does not have a %s function'
+                           % (filepath, required_function_name))
+                    iaslog('Ignoring %s' % filepath)
+            except BaseException:
+                iaslog(
+                    'Ignoring %s because of error importing module' % filepath)
+    return
+
+
 def main():
     # Options
     usage = '%prog [options]'
@@ -393,8 +425,7 @@ def main():
 
     # Dry run that doesn't actually run or install anything.
     if opts.dry_run:
-        global g_dry_run
-        g_dry_run = True
+        globals()['g_dry_run'] = True
 
     # Check for root and json url.
     if opts.jsonurl:
@@ -406,7 +437,7 @@ def main():
         if opts.userscript:
             pass
         else:
-            iaslog('No JSON URL specified!')
+            iaslog('Error: No JSON URL specified!')
             sys.exit(1)
 
     # Begin logging events
@@ -442,7 +473,7 @@ def main():
             os.remove(userscripttouchpath)
             sys.exit(0)
         else:
-            iaslog('Failed to run script!')
+            iaslog('Error: Failed to run script!')
             sys.exit(1)
 
     # Ensure the directories exist
@@ -598,15 +629,16 @@ def main():
         for item in iajson[stage]:
             # Set the filepath, name and type.
             try:
-                path = item['file']
+                if not plugin:
+                    path = item['file']
                 name = item['name']
                 type = item['type']
             except KeyError as e:
                 iaslog('Invalid item %s: %s' % (repr(item), str(e)))
                 continue
-            iaslog('%s processing %s %s at %s' % (stage, type, name, path))
 
             if type == 'package':
+                iaslog('%s - processing package %s at %s' % (stage, name, path))
                 packageid = item['packageid']
                 version = item['version']
                 try:
@@ -646,6 +678,8 @@ def main():
                     # Install the package
                     installerstatus = installpackage(item['file'])
             elif type == 'rootscript':
+                iaslog('%s - processing rootscript %s at %s' %
+                      (stage, name, path))
                 if 'url' in item:
                     download_if_needed(item, stage, type, opts,
                                        depnotifystatus)
@@ -660,8 +694,7 @@ def main():
                 if stage == 'preflight':
                     preflightrun = runrootscript(path, donotwait)
                     if preflightrun:
-                        iaslog('Preflight passed all checks. Skipping run.'
-                                )
+                        iaslog('Preflight passed all checks. Skipping run.')
                         userid = str(getconsoleuser()[1])
                         cleanup(iapath, ialdpath, ldidentifier, ialapath,
                                 laidentifier, userid, reboot)
@@ -669,13 +702,14 @@ def main():
                         iaslog('Preflight did not pass all checks. '
                                 'Continuing run.')
                         continue
-
                 runrootscript(path, donotwait)
             elif type == 'userscript':
+                iaslog('%s - processing userscript %s at %s' %
+                      (stage, name, path))
                 if stage == 'setupassistant':
                     iaslog('Detected setupassistant and user script. '
                            'User scripts cannot work in setupassistant stage! '
-                           'Removing %s') % path
+                           'Removing %s' % path)
                     os.remove(path)
                     pass
                 if 'url' in item:
@@ -689,6 +723,22 @@ def main():
                 while os.path.isfile(userscripttouchpath):
                     iaslog('Waiting for user script to complete: %s' % (path))
                     time.sleep(0.5)
+            elif type == 'plugin':
+                iaslog('%s - processing %s, requires plugin' % (stage, name))
+                # check if a plugin was found and loaded
+                if not plugin:
+                    iaslog('Error: %s requires plugin. No plugin was found '
+                           'so skipping' % (name))
+                    pass
+                else:
+                    if opts.depnotify:
+                        if depnotifystatus:
+                            deplog('Status: Installing: %s' % (name))
+                    iaslog('%s requires plugin. %s is loaded' % (name, plugin))
+                    iaslog('Processing item through plugin')
+                    # plugin module must have process_item function
+                    plugin.process_item(item)
+
 
     # Trigger the final DEPNotify events
     if opts.depnotify:
@@ -712,4 +762,5 @@ def main():
 
 
 if __name__ == '__main__':
+    import_plugin()
     main()
