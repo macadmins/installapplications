@@ -452,17 +452,21 @@ def main():
                 os.makedirs(path)
                 os.chmod(path, 0777)
 
+    # Skip these triggers as they either go at the end of the run or
+    # our custom to IAs
+    depnotify_triggers = ['Command: Quit', 'Command: Restart',
+                          'Command: Logout', 'DEPNotifyPath',
+                          'DEPNotifyArguments', 'DEPNotifySkipStatus']
     # DEPNotify trigger commands that need to happen at the end of a run
-    deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
-                   'DEPNotifyPath', 'DEPNotifyArguments',
-                   'DEPNotifySkipStatus']
+    depnotify_final_triggers = ['Command: Quit', 'Command: Restart',
+                                'Command: Logout']
 
     # Look for all the DEPNotify options but skip the ones that are usually
     # done after a full run.
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if any(x in notification for x in deptriggers):
+            if any(x in notification for x in depnotify_triggers):
                 if 'DEPNotifySkipStatus' in notification:
                     depnotifystatus = False
             else:
@@ -694,7 +698,7 @@ def main():
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if any(x in notification for x in deptriggers):
+            if any(x in notification for x in depnotify_final_triggers):
                 iaslog('Sending %s to DEPNotify' % (str(notification)))
                 deplog(notification)
             else:
