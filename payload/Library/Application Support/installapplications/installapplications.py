@@ -452,6 +452,17 @@ def main():
                 os.makedirs(path)
                 os.chmod(path, 0777)
 
+    # In rare cases, the user log file will be owned by _mbsetupuser causing
+    # everything to hang for the user script to finish. Either way, make it
+    # 777 perms
+    user_log_path = os.path.join('/private/var/tmp/installapplications',
+                                 'installapplications.user.log')
+    if not os.path.isfile(user_log_path):
+        touch(user_log_path)
+        os.chmod(user_log_path, 0777)
+    else:
+        os.chmod(user_log_path, 0777)
+
     # Skip these triggers as they either go at the end of the run or
     # our custom to IAs
     depnotify_triggers = ['Command: Quit', 'Command: Restart',
