@@ -44,6 +44,7 @@ import urllib
 
 g_dry_run = False
 plugin = None
+middleware = None
 
 
 def deplog(text):
@@ -136,6 +137,13 @@ def launchctl(*arg):
 
 
 def downloadfile(options):
+    # Allow middleware to modify options
+    if middleware:
+        iaslog('Processing options through middleware')
+        # middleware module must have process_request_options function
+        # and must return usable options
+        options = middleware.process_request_options(options)
+        iaslog('Options: %s' % options)
     connection = gurl.Gurl.alloc().initWithOptions_(options)
     percent_complete = -1
     bytes_received = 0
@@ -357,12 +365,15 @@ def cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
         sys.exit(0)
 
 
-def import_plugin():
+def import_plugin_middleware():
     # Thanks to authors of munkilib/fetch.py (middleware)
     '''Check installapplications folder for a python file that starts with
-    plugin. If the file exists and has a callable 'process_item' attribute,
-    the module is loaded under the 'plugin' name'''
-    required_function_name = 'process_item'
+    plugin or middleware. If a plugin file exists and has a callable
+    'process_item' attribute, the module is loaded under the 'plugin' name.
+    If a middleware file exists and has a callable 'process_request_options'
+    attribute, the module is loaded under the 'middleware' name'''
+    plugin_req_function = 'process_item'
+    middleware_req_function = 'process_request_options'
     ias_dir = os.path.abspath(os.path.dirname(__file__))
     for filename in os.listdir(ias_dir):
         if (filename.startswith('plugin')
@@ -371,18 +382,40 @@ def import_plugin():
             filepath = os.path.join(ias_dir, filename)
             try:
                 _tmp = imp.load_source(name, filepath)
-                if hasattr(_tmp, required_function_name):
-                    if callable(getattr(_tmp, required_function_name)):
+                if hasattr(_tmp, plugin_req_function):
+                    if callable(getattr(_tmp, plugin_req_function)):
                         iaslog('Loading plugin module %s' % filename)
                         globals()['plugin'] = _tmp
                         return
                     else:
                         iaslog('%s attribute in %s is not callable'
-                               % (required_function_name, filepath))
+                               % (plugin_req_function, filepath))
                         iaslog('Ignoring %s' % filepath)
                 else:
                     iaslog('%s does not have a %s function'
-                           % (filepath, required_function_name))
+                           % (filepath, plugin_req_function))
+                    iaslog('Ignoring %s' % filepath)
+            except BaseException:
+                iaslog(
+                    'Ignoring %s because of error importing module' % filepath)
+        elif (filename.startswith('middleware')
+                and os.path.splitext(filename)[1] == '.py'):
+            name = os.path.splitext(filename)[0]
+            filepath = os.path.join(ias_dir, filename)
+            try:
+                _tmp = imp.load_source(name, filepath)
+                if hasattr(_tmp, middleware_req_function):
+                    if callable(getattr(_tmp, middleware_req_function)):
+                        iaslog('Loading middleware module %s' % filename)
+                        globals()['middleware'] = _tmp
+                        return
+                    else:
+                        iaslog('%s attribute in %s is not callable'
+                               % (middleware_req_function, filepath))
+                        iaslog('Ignoring %s' % filepath)
+                else:
+                    iaslog('%s does not have a %s function'
+                           % (filepath, middleware_req_function))
                     iaslog('Ignoring %s' % filepath)
             except BaseException:
                 iaslog(
@@ -629,7 +662,7 @@ def main():
         for item in iajson[stage]:
             # Set the filepath, name and type.
             try:
-                if not plugin:
+                if plugin is None:
                     path = item['file']
                 name = item['name']
                 type = item['type']
@@ -726,8 +759,8 @@ def main():
             elif type == 'plugin':
                 iaslog('%s - processing %s, requires plugin' % (stage, name))
                 # check if a plugin was found and loaded
-                if not plugin:
-                    iaslog('Error: %s requires plugin. No plugin was found '
+                if plugin is None:
+                    iaslog('Error: %s requires plugin, but no plugin was found '
                            'so skipping' % (name))
                     pass
                 else:
@@ -762,5 +795,5 @@ def main():
 
 
 if __name__ == '__main__':
-    import_plugin()
+    import_plugin_middleware()
     main()
