@@ -106,7 +106,7 @@ def main():
                         help='Required: Base URL to where root dir is hosted')
     parser.add_argument('--output', default=None, action='store',
                         help='Required: Output directory to save json')
-    parser.add_argument('--item', default=None, action='append', nargs=6,
+    parser.add_argument('--item', default=None, action='append', nargs='*',
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait'),
@@ -139,6 +139,14 @@ def main():
 
     # Process each item in the order they were passed in
     for item in itemsToProcess:
+        # check that required keys are present
+        requiredKeys = ['item-name', 'item-path']
+        for key in requiredKeys:
+            try:
+                test = item[key]
+            except KeyError:
+                print 'Argument %s missing - please check your syntax.' % key
+                exit(1)
         itemJson = {}
         # Get the file extension of the file
         fileExt = os.path.splitext(item['item-path'])[1]
@@ -150,9 +158,9 @@ def main():
         # Determine the type of item to process - for scripts, default to
         # rootscript
         if fileExt in ('.py', '.sh', '.rb', '.php'):
-            if item['item-type']:
+            try:
                 itemJson['type'] = itemType = item['item-type']
-            else:
+            except KeyError:
                 itemJson['type'] = itemType = 'rootscript'
         elif fileExt == '.pkg':
             itemJson['type'] = itemType = 'package'
@@ -165,7 +173,7 @@ def main():
             exit(1)
 
         # Determine the stage of the item to process - default to userland
-        if item['item-stage']:
+        try:
             if item['item-stage'] in ('preflight', 'setupassistant',
                                       'userland'):
                 itemStage = item['item-stage']
@@ -173,15 +181,15 @@ def main():
             else:
                 print 'item-stage malformed: %s' % str(item['item-stage'])
                 exit(1)
-        else:
+        except KeyError:
             itemStage = 'userland'
 
         # Determine the url of the item to process - defaults to
         # baseurl/stage/filename
-        if not item['item-url']:
-            itemJson['url'] = '%s/%s/%s' % (args.base_url, itemStage, fileName)
-        else:
+        try:
             itemJson['url'] = item['item-url']
+        except KeyError:
+            itemJson['url'] = '%s/%s/%s' % (args.base_url, itemStage, fileName)
 
         # Determine the name of the item to process - defaults to the filename
         if not item['item-name']:
@@ -202,15 +210,20 @@ def main():
                 itemJson['file'] = '/Library/Application Support/'\
                     'installapplications/%s' % fileName
             # Check crappy way of doing booleans
-            if item['script-do-not-wait'] in ('true', 'True', '1',
+            try:
+                if item['script-do-not-wait'] in ('true', 'True', '1',
                                               'false', 'False', '0'):
-                # If True, pass the key to the item
-                if item['script-do-not-wait'] in ('true', 'True', '1'):
-                    itemJson['donotwait'] = True
-            else:
-                print 'script-do-not-wait malformed: %s ' % str(
-                    item['script-do-not-wait'])
+                    # If True, pass the key to the item
+                    if item['script-do-not-wait'] in ('true', 'True', '1'):
+                        itemJson['donotwait'] = True
+                    else:
+                        print 'script-do-not-wait malformed: %s ' % str(
+                        item['script-do-not-wait'])
+                        exit(1)
+            except:
+                print 'script-do-not-wait missing: %s' % str(item['item-name'])
                 exit(1)
+
         # If packages, we need the version and packageid
         elif itemType == 'package':
             (pkgId, pkgVersion) = getpkginfo(filePath)
