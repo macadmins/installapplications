@@ -221,8 +221,7 @@ def main():
                     item['script-do-not-wait'])
                     exit(1)
             except:
-                print 'script-do-not-wait missing: %s' % str(item['item-name'])
-                exit(1)
+                itemJson['donotwait'] = False
 
         # If packages, we need the version and packageid
         elif itemType == 'package':
