@@ -216,10 +216,10 @@ def main():
                     # If True, pass the key to the item
                     if item['script-do-not-wait'] in ('true', 'True', '1'):
                         itemJson['donotwait'] = True
-                    else:
-                        print 'script-do-not-wait malformed: %s ' % str(
-                        item['script-do-not-wait'])
-                        exit(1)
+                else:
+                    print 'script-do-not-wait malformed: %s ' % str(
+                    item['script-do-not-wait'])
+                    exit(1)
             except:
                 print 'script-do-not-wait missing: %s' % str(item['item-name'])
                 exit(1)
