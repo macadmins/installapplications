@@ -66,9 +66,6 @@ def extractpkginfo(filename):
     if not os.path.isfile(filename):
         return
     else:
-        if not os.path.isabs(filename):
-            filename = os.path.join(cwd, filename)
-
         tmpFolder = tempfile.mkdtemp()
         os.chdir(tmpFolder)
         # need to get path from BOM
