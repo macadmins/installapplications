@@ -14,6 +14,8 @@
 
 #
 # --item can be used unlimited times
+# If you do do not specify an item-url, one will be generated as
+# base-url/stage/file-name-of-item
 # Future plan for this tool is to add AWS S3 integration for auto-upload
 
 import hashlib
@@ -100,16 +102,17 @@ def getpkginfo(filename):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-url', default=None, action='store',
-                        help='Required: Base URL to where root dir is hosted')
+                        help='Optional: Base URL to where root dir is hosted. \
+                        Pass and leave item-url blank for auto-generation.')
     parser.add_argument('--output', default=None, action='store',
                         help='Required: Output directory to save json')
     parser.add_argument('--item', default=None, action='append', nargs='*',
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait'),
-                        help='Required: Options for item. All items are \
-                        required. Scripts default to rootscript and stage \
-                        defaults to userland')
+                        help='Required: Options for item; you must pass at \
+                        least path, name and url (if base-url is not passed). \
+                        Scripts default to rootscript and stage defaults to userland')
     args = parser.parse_args()
 
     # Bail if we don't have one item, the base url and the output dir
