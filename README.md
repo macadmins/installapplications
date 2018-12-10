@@ -280,7 +280,15 @@ You may have more than one package in each stage. Packages will be deployed in a
 
 Using `generatejson.py` you can automatically generate the json with the file, hash, and name keys populated (you'll need to upload the packages to a server and update the url keys).
 
-You can pass an unlimited amount of `--item` arguments, but each one must have all six meta-variables. If you do not want to enter one of the meta-variables, simple pass a blank string `''`.
+You can pass an unlimited amount of `--item` arguments, each one with the following meta-variables:
+* item-name - optional, sets the display name that will show in DEPNotify
+* item-path - required, path on the local disk to the item you want to include
+* item-stage - optional, defaults to userland if not specified
+* item-type - optional, generatejson will detect package vs script. Scripts default to rootscript, so pass "userscript" to this variable if your item is a userscript.
+* item-url - optional, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
+* script-do-not-wait - optional, only applies to userscript and rootscript item-types. Defaults to false.
+If you do not want to enter one of the meta-variables, you can either pass a blank strip `''` or simply omit it from your command.
+
 
 Run the tool:
 ```
