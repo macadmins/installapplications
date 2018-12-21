@@ -274,7 +274,7 @@ The following is an example JSON:
 
 URLs should not be subject to redirection, or there may be unintended behavior. Please link directly to the URI of the package.
 
-You may have more than one package in each stage. Packages will be deployed in alphabetical order, not listed order, so if you want packages installed in a certain order, begin their file names with 1-, 2-, 3- as the case may be.
+You may have more than one package and script in each stage. Packages and scripts will be deployed in the order listed.
 
 ### Creating your JSON
 
