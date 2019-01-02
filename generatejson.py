@@ -30,7 +30,7 @@ from xml.dom import minidom
 def gethash(filename):
     hash_function = hashlib.sha256()
     if not os.path.isfile(filename):
-        return 'NOT A FILE'
+        return 'FILE NOT FOUND - CHECK YOUR PATH'
 
     fileref = open(filename, 'rb')
     while 1:
