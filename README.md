@@ -280,14 +280,13 @@ You may have more than one package and script in each stage. Packages and script
 
 Using `generatejson.py` you can automatically generate the json with the file, hash, and name keys populated (you'll need to upload the packages to a server and update the url keys).
 
-You can pass an unlimited amount of `--item` arguments, each one with the following meta-variables:
-* item-name - optional, sets the display name that will show in DEPNotify
+You can pass an unlimited amount of `--item` arguments, each one with the following meta-variables. Please note that currently _all_ of these meta-variables are **required**:
+* item-name - required, sets the display name that will show in DEPNotify
 * item-path - required, path on the local disk to the item you want to include
-* item-stage - optional, defaults to userland if not specified
-* item-type - optional, generatejson will detect package vs script. Scripts default to rootscript, so pass "userscript" to this variable if your item is a userscript.
-* item-url - optional, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
-* script-do-not-wait - optional, only applies to userscript and rootscript item-types. Defaults to false.
-If you do not want to enter one of the meta-variables, you can either pass a blank strip `''` or simply omit it from your command.
+* item-stage - required, defaults to userland if not specified
+* item-type - required, generatejson will detect package vs script. Scripts default to rootscript, so pass "userscript" to this variable if your item is a userscript.
+* item-url - required, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
+* script-do-not-wait - required, only applies to userscript and rootscript item-types. Defaults to false.
 
 
 Run the tool:
