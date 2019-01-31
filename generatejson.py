@@ -102,16 +102,15 @@ def getpkginfo(filename):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-url', default=None, action='store',
-                        help='Optional: Base URL to where root dir is hosted. \
-                        Pass and leave item-url blank for auto-generation.')
+                        help='Base URL to where root dir is hosted')
     parser.add_argument('--output', default=None, action='store',
                         help='Required: Output directory to save json')
-    parser.add_argument('--item', default=None, action='append', nargs='*',
+    parser.add_argument('--item', default=None, action='append', nargs=6,
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait'),
-                        help='Required: Options for item; you must pass at \
-                        least path, name and url (if base-url is not passed). \
+                        help='Required: Options for item. All items are \
+                        required. Scripts default to rootscript and stage \
                         Scripts default to rootscript and stage defaults to userland')
     args = parser.parse_args()
 
@@ -139,14 +138,6 @@ def main():
 
     # Process each item in the order they were passed in
     for item in itemsToProcess:
-        # check that required keys are present
-        requiredKeys = ['item-name', 'item-path']
-        for key in requiredKeys:
-            try:
-                test = item[key]
-            except KeyError:
-                print 'Argument %s missing - please check your syntax.' % key
-                exit(1)
         itemJson = {}
         # Get the file extension of the file
         fileExt = os.path.splitext(item['item-path'])[1]
