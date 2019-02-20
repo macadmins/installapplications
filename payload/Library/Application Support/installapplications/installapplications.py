@@ -678,8 +678,9 @@ def main():
                         iaslog('Preflight passed all checks. Skipping run.'
                                 )
                         userid = str(getconsoleuser()[1])
+                        # Do not allow a reboot for passed preflights
                         cleanup(iapath, ialdpath, ldidentifier, ialapath,
-                                laidentifier, userid, reboot)
+                                laidentifier, userid, False)
                     else:
                         iaslog('Preflight did not pass all checks. '
                                 'Continuing run.')
