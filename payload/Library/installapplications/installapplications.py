@@ -610,6 +610,18 @@ def main():
                 continue
             iaslog('%s processing %s %s at %s' % (stage, type, name, path))
 
+            # On userland stage, we want to wait until we are actually
+            # in the user's session.
+            if stage == 'userland':
+                if len(iajson['userland']) > 0:
+                    while (getconsoleuser()[0] is None
+                           or getconsoleuser()[0] == u'loginwindow'
+                           or getconsoleuser()[0] == u'_mbsetupuser'):
+                        iaslog('Detected SetupAssistant in userland '
+                               'stage - delaying install until user '
+                               'session.')
+                        time.sleep(1)
+
             if type == 'package':
                 packageid = item['packageid']
                 version = item['version']
@@ -627,17 +639,6 @@ def main():
                     download_if_needed(item, stage, type, opts,
                                        depnotifystatus)
 
-                    # On userland stage, we want to wait until we are actually
-                    # in the user's session.
-                    if stage == 'userland':
-                        if len(iajson['userland']) > 0:
-                            while (getconsoleuser()[0] is None
-                                   or getconsoleuser()[0] == 'loginwindow'
-                                   or getconsoleuser()[0] == '_mbsetupuser'):
-                                iaslog('Detected SetupAssistant in userland '
-                                       'stage - delaying install until user '
-                                       'session.')
-                                time.sleep(1)
                     iaslog('Installing %s from %s' % (name, path))
                     if opts.depnotify:
                         if stage == 'setupassistant':
