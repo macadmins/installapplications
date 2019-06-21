@@ -63,23 +63,24 @@ def getpkginfopath(filename):
 def extractpkginfo(filename):
     '''Takes input of a file path and returns a file path to the
     extracted PackageInfo file.'''
-    cwd = os.getcwd()
-
     if not os.path.isfile(filename):
         return
     else:
         tmpFolder = tempfile.mkdtemp()
-        os.chdir(tmpFolder)
         # need to get path from BOM
         pkgInfoPath = getpkginfopath(filename)
 
         extractedPkgInfoPath = os.path.join(tmpFolder, pkgInfoPath)
-        cmd = ['/usr/bin/xar', '-xf', filename, pkgInfoPath]
+        cmd = [
+            '/usr/bin/xar',
+            '-x',
+            '-C', tmpFolder,
+            '-f', filename,
+            pkgInfoPath]
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         out, err = proc.communicate()
-        os.chdir(cwd)
         return extractedPkgInfoPath
 
 
