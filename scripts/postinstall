@@ -16,6 +16,8 @@
 # limitations under the License.
 
 # Loads the InstallApplications LaunchAgent LaunchDaemon
+from __future__ import absolute_import
+from __future__ import print_function
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import os
 import subprocess
@@ -46,7 +48,7 @@ def main():
         if os.path.isfile(file):
             pass
         else:
-            print 'File does not exist: %s' % file
+            print('File does not exist: %s' % file)
             sys.exit(1)
     currentuseruid = getconsoleuser()
     launchctl('/bin/launchctl', 'load', ldpath)
