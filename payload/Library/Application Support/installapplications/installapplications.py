@@ -308,7 +308,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         # Fix script permissions.
         if os.path.splitext(path)[1] != ".pkg":
             os.chmod(path, 0755)
-        if type is 'userscript':
+        if type == 'userscript':
             os.chmod(path, 0777)
 
 
