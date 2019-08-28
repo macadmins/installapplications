@@ -307,9 +307,9 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
                gethash(path), hash))
         # Fix script permissions.
         if os.path.splitext(path)[1] != ".pkg":
-            os.chmod(path, 0755)
+            os.chmod(path, 0o755)
         if type == 'userscript':
-            os.chmod(path, 0777)
+            os.chmod(path, 0o777)
 
 
 def touch(path):
@@ -318,7 +318,7 @@ def touch(path):
         proc = subprocess.Popen(touchfile, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         touchfileoutput, err = proc.communicate()
-        os.chmod(path, 0777)
+        os.chmod(path, 0o777)
         return touchfileoutput
     except Exception:
         return None
@@ -452,7 +452,7 @@ def main():
         for path in [iauserscriptpath, iatmppath]:
             if not os.path.isdir(path):
                 os.makedirs(path)
-                os.chmod(path, 0777)
+                os.chmod(path, 0o777)
 
     # In rare cases, the user log file will be owned by _mbsetupuser causing
     # everything to hang for the user script to finish. Either way, make it
@@ -461,9 +461,9 @@ def main():
                                  'installapplications.user.log')
     if not os.path.isfile(user_log_path):
         touch(user_log_path)
-        os.chmod(user_log_path, 0777)
+        os.chmod(user_log_path, 0o777)
     else:
-        os.chmod(user_log_path, 0777)
+        os.chmod(user_log_path, 0o777)
 
     # Skip these triggers as they either go at the end of the run or
     # our custom to IAs
@@ -580,7 +580,7 @@ def main():
                         mlogfile = os.path.join(mlogpath,
                                                 'ManagedSoftwareUpdate.log')
                         if not os.path.isdir(mlogpath):
-                            os.makedirs(mlogpath, 0755)
+                            os.makedirs(mlogpath, 0o755)
                         if not os.path.isfile(mlogfile):
                             touch(mlogfile)
                     if len(depnotifyarguments) >= 2:
@@ -606,7 +606,7 @@ def main():
                 depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
                 with open(depnotifyscriptpath, 'wb') as f:
                     f.write(depnotifyscript)
-                os.chmod(depnotifyscriptpath, 0777)
+                os.chmod(depnotifyscriptpath, 0o777)
                 touch(userscripttouchpath)
                 while os.path.isfile(userscripttouchpath):
                     iaslog('Waiting for DEPNotify script to complete')
