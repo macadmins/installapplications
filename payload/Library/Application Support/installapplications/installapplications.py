@@ -661,7 +661,7 @@ def main():
                             if depnotifystatus:
                                 deplog('Status: Installing: %s' % (name))
                     # Install the package
-                    installerstatus = installpackage(item['file'])
+                    installpackage(item['file'])
             elif type == 'rootscript':
                 if 'url' in item:
                     download_if_needed(item, stage, type, opts,
