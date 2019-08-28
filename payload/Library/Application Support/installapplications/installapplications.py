@@ -27,9 +27,6 @@
 
 from __future__ import print_function
 
-from distutils.version import LooseVersion
-from Foundation import NSLog
-from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import hashlib
 import json
 import optparse
@@ -41,9 +38,15 @@ import subprocess
 import sys
 import time
 import urllib
-sys.path.append('/usr/local/installapplications')
+from distutils.version import LooseVersion
+
+from Foundation import NSLog
+
 # PEP8 can really be annoying at times.
 import gurl  # noqa
+from SystemConfiguration import SCDynamicStoreCopyConsoleUser
+
+sys.path.append('/usr/local/installapplications')
 
 
 g_dry_run = False
