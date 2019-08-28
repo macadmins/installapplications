@@ -25,6 +25,8 @@
 # https://github.com/munki/munki
 # Notice a pattern?
 
+from __future__ import print_function
+
 from distutils.version import LooseVersion
 from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
@@ -400,7 +402,7 @@ def main():
     if opts.jsonurl:
         jsonurl = opts.jsonurl
         if not g_dry_run and (os.getuid() != 0):
-            print 'InstallApplications requires root!'
+            print('InstallApplications requires root!')
             sys.exit(1)
     else:
         if opts.userscript:
