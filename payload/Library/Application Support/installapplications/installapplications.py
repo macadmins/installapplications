@@ -69,8 +69,8 @@ def pkgregex(pkgpath):
         # capture everything after last / in the pkg filepath
         pkgname = re.compile(r"[^/]+$").search(pkgpath).group(0)
         return pkgname
-    except AttributeError, IndexError:
-        return packagepath
+    except (AttributeError, IndexError) as e:
+        return pkgpath
 
 
 def installpackage(packagepath):
