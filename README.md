@@ -3,6 +3,62 @@
 
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
+## Embedded Python
+As of v2.0, InstallApplications now uses its own embedded python. This is due to Apple's upcoming removal of Python2.
+
+Gurl has been updated from the Munki 3.7 release and tested with HTTPs and Basic Authentication. Further testing would be appreciate by the community.
+
+### Embedded Modules
+To help admins with their scripts, the following modules have been added:
+PyObjC (required for gurl)
+Requests (for API driven tools)
+
+Should the need come up for more modules, a PR should be made against the repo with proper justification
+
+### 2to3
+`installapplications.py` and `postinstall` have been ran through 2to3 to automatically convert for Python3 compatibility.
+
+### Building embedded python framework
+
+To reduce the size of the git repository, you **must** create your own Python. To do this, simply run the `./build_python_framework.sh` script within the repository.
+
+This process was tested on Catalina only.
+
+```
+./build_python_framework.sh
+
+Cloning relocatable-python tool from github...
+Cloning into '/tmp/relocatable-python-git'...
+remote: Enumerating objects: 20, done.
+remote: Counting objects: 100% (20/20), done.
+remote: Compressing objects: 100% (14/14), done.
+remote: Total 70 (delta 7), reused 16 (delta 6), pack-reused 50
+Unpacking objects: 100% (70/70), done.
+Downloading https://www.python.org/ftp/python/3.7.4/python-3.7.4-macosx10.9.pkg...
+
+...
+
+Done!
+Customized, relocatable framework is at ./Python.framework
+Moving Python.framework to InstallApplications payload folder
+```
+
+### Package size increases
+Unfortunately due to the embedded python, InstallApplications has significantly grown in size, from approximately 35Kb to 27.5 MB. The low size of InstallApplications has traditionally been one of it's greatest strengths, given how fragile `mdmclient` can be, but there is nothing that can be done here.
+
+### Pinning python user/root scripts to embedded Python
+Python user/root scripts should be pinned to the embedded Python framework. Moving forward, **scripts not pinned will be unsupported**.
+
+It is recommended that you run `2to3` against your scripts to make them python3 compliant.
+
+`/usr/local/bin/2to3 -w /path/to/script`
+
+Then simply update the shebang on your python scripts to pin against the InstallApplications python framework.
+
+`#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3`
+
+You can find an example on how this was done by looking at InstallApplications' own `postinstall`
+
 ## MDMs that support Custom DEP
 - AirWatch
 - FileWave (please contact them for instructions)

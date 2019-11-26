@@ -37,8 +37,8 @@ if [ "${CLONE_RESULT}" != "0" ]; then
 fi
 
 # remove existing Python.framework if present
-if [ -d "${MUNKIROOT}/Python.framework" ]; then
-    rm -rf "${MUNKIROOT}/Python.framework"
+if [ -d "${MUNKIROOT}/payload/Library/installapplications/Python.framework" ]; then
+    rm -rf "${MUNKIROOT}/payload/Library/installapplications/Python.framework"
 fi
 
 # build the framework
@@ -46,3 +46,7 @@ fi
     --python-version "${PYTHON_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \
     --destination "${MUNKIROOT}"
+
+# move the framework
+echo "Moving Python.framework to InstallApplications payload folder"
+mv "${MUNKIROOT}/Python.framework" "${MUNKIROOT}/payload/Library/installapplications"
