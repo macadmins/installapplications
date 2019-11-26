@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3
 # encoding: utf-8
 #
-# Copyright 2009-2018 Erik Gomez.
+# Copyright 2009-2020 Erik Gomez.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ import shutil
 import subprocess
 import sys
 import time
-import urllib
-sys.path.append('/usr/local/installapplications')
+import urllib.request, urllib.parse, urllib.error
+sys.path.append('/Library/installapplications')
 # PEP8 can really be annoying at times.
 import gurl  # noqa
 
@@ -67,7 +67,7 @@ def pkgregex(pkgpath):
         # capture everything after last / in the pkg filepath
         pkgname = re.compile(r"[^/]+$").search(pkgpath).group(0)
         return pkgname
-    except AttributeError, IndexError:
+    except AttributeError as IndexError:
         return packagepath
 
 
@@ -84,7 +84,7 @@ def installpackage(packagepath):
         output, rcode = proc.communicate(), proc.returncode
         installlog = output[0].split('\n')
         # Filter all blank lines after the split.
-        for line in filter(None, installlog):
+        for line in [_f for _f in installlog if _f]:
             # Replace any instances of % with a space and any elipsis with
             # a blank line since NSLog can't handle these kinds of characters.
             # Hopefully this is the only bad characters we will ever run into.
@@ -277,8 +277,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
             item.update({'additional_headers':
                          {'Authorization': opts.headers}})
         # Download the file once:
-        iaslog('Starting download: %s' % (urllib.unquote(itemurl.decode('utf8')
-                                                         )))
+        iaslog('Starting download: %s' % (urllib.parse.unquote(itemurl)))
         if opts.depnotify:
             if stage == 'setupassistant':
                 iaslog('Skipping DEPNotify notification due to setupassistant.'
@@ -305,9 +304,9 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
                gethash(path), hash))
         # Fix script permissions.
         if os.path.splitext(path)[1] != ".pkg":
-            os.chmod(path, 0755)
+            os.chmod(path, 0o755)
         if type is 'userscript':
-            os.chmod(path, 0777)
+            os.chmod(path, 0o777)
 
 
 def touch(path):
@@ -316,7 +315,7 @@ def touch(path):
         proc = subprocess.Popen(touchfile, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         touchfileoutput, err = proc.communicate()
-        os.chmod(path, 0777)
+        os.chmod(path, 0o777)
         return touchfileoutput
     except Exception:
         return None
@@ -370,7 +369,7 @@ def main():
     o.add_option('--headers', help=('Optional: Auth headers'))
     o.add_option('--jsonurl', help=('Required: URL to json file.'))
     o.add_option('--iapath',
-                 default='/Library/Application Support/installapplications',
+                 default='/Library/installapplications',
                  help=('Optional: Specify InstallApplications package path.'))
     o.add_option('--ldidentifier',
                  default='com.erikng.installapplications',
@@ -400,7 +399,7 @@ def main():
     if opts.jsonurl:
         jsonurl = opts.jsonurl
         if not g_dry_run and (os.getuid() != 0):
-            print 'InstallApplications requires root!'
+            print('InstallApplications requires root!')
             sys.exit(1)
     else:
         if opts.userscript:
@@ -450,34 +449,19 @@ def main():
         for path in [iauserscriptpath, iatmppath]:
             if not os.path.isdir(path):
                 os.makedirs(path)
-                os.chmod(path, 0777)
+                os.chmod(path, 0o777)
 
-    # In rare cases, the user log file will be owned by _mbsetupuser causing
-    # everything to hang for the user script to finish. Either way, make it
-    # 777 perms
-    user_log_path = os.path.join('/private/var/tmp/installapplications',
-                                 'installapplications.user.log')
-    if not os.path.isfile(user_log_path):
-        touch(user_log_path)
-        os.chmod(user_log_path, 0777)
-    else:
-        os.chmod(user_log_path, 0777)
-
-    # Skip these triggers as they either go at the end of the run or
-    # our custom to IAs
-    depnotify_triggers = ['Command: Quit', 'Command: Restart',
-                          'Command: Logout', 'DEPNotifyPath',
-                          'DEPNotifyArguments', 'DEPNotifySkipStatus']
     # DEPNotify trigger commands that need to happen at the end of a run
-    depnotify_final_triggers = ['Command: Quit', 'Command: Restart',
-                                'Command: Logout']
+    deptriggers = ['Command: Quit', 'Command: Restart', 'Command: Logout',
+                   'DEPNotifyPath', 'DEPNotifyArguments',
+                   'DEPNotifySkipStatus']
 
     # Look for all the DEPNotify options but skip the ones that are usually
     # done after a full run.
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if any(x in notification for x in depnotify_triggers):
+            if any(x in notification for x in deptriggers):
                 if 'DEPNotifySkipStatus' in notification:
                     depnotifystatus = False
             else:
@@ -510,8 +494,8 @@ def main():
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
-        iaslog('Starting download: %s' % (urllib.unquote(
-            json_data['url']).decode('utf8')))
+        iaslog('Starting download: %s' % (urllib.parse.unquote(
+            json_data['url'])))
         downloadfile(json_data)
         time.sleep(0.5)
 
@@ -561,8 +545,8 @@ def main():
                         depnotifyarguments = depnstr.split(' ', 1)[-1]
             if depnotifypath:
                 while (getconsoleuser()[0] is None
-                       or getconsoleuser()[0] == u'loginwindow'
-                       or getconsoleuser()[0] == u'_mbsetupuser'):
+                       or getconsoleuser()[0] == 'loginwindow'
+                       or getconsoleuser()[0] == '_mbsetupuser'):
                     iaslog('Detected SetupAssistant in userland stage - '
                            'delaying DEPNotify launch until user session.')
                     time.sleep(1)
@@ -578,7 +562,7 @@ def main():
                         mlogfile = os.path.join(mlogpath,
                                                 'ManagedSoftwareUpdate.log')
                         if not os.path.isdir(mlogpath):
-                            os.makedirs(mlogpath, 0755)
+                            os.makedirs(mlogpath, 0o755)
                         if not os.path.isfile(mlogfile):
                             touch(mlogfile)
                     if len(depnotifyarguments) >= 2:
@@ -604,7 +588,7 @@ def main():
                 depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
                 with open(depnotifyscriptpath, 'wb') as f:
                     f.write(depnotifyscript)
-                os.chmod(depnotifyscriptpath, 0777)
+                os.chmod(depnotifyscriptpath, 0o777)
                 touch(userscripttouchpath)
                 while os.path.isfile(userscripttouchpath):
                     iaslog('Waiting for DEPNotify script to complete')
@@ -643,8 +627,8 @@ def main():
                     if stage == 'userland':
                         if len(iajson['userland']) > 0:
                             while (getconsoleuser()[0] is None
-                                   or getconsoleuser()[0] == u'loginwindow'
-                                   or getconsoleuser()[0] == u'_mbsetupuser'):
+                                   or getconsoleuser()[0] == 'loginwindow'
+                                   or getconsoleuser()[0] == '_mbsetupuser'):
                                 iaslog('Detected SetupAssistant in userland '
                                        'stage - delaying install until user '
                                        'session.')
@@ -678,9 +662,8 @@ def main():
                         iaslog('Preflight passed all checks. Skipping run.'
                                 )
                         userid = str(getconsoleuser()[1])
-                        # Do not allow a reboot for passed preflights
                         cleanup(iapath, ialdpath, ldidentifier, ialapath,
-                                laidentifier, userid, False)
+                                laidentifier, userid, reboot)
                     else:
                         iaslog('Preflight did not pass all checks. '
                                 'Continuing run.')
@@ -710,7 +693,7 @@ def main():
     if opts.depnotify:
         for varg in opts.depnotify:
             notification = str(varg)
-            if any(x in notification for x in depnotify_final_triggers):
+            if any(x in notification for x in deptriggers):
                 iaslog('Sending %s to DEPNotify' % (str(notification)))
                 deplog(notification)
             else:

@@ -6,8 +6,8 @@
 	<string>com.erikng.installapplications</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/bin/python</string>
-		<string>/Library/Application Support/installapplications/installapplications.py</string>
+		<string>/Library/installapplications/Python.framework/Versions/3.7/bin/python3</string>
+		<string>/Library/installapplications/installapplications.py</string>
 		<string>--userscript</string>
 	</array>
 	<key>KeepAlive</key>

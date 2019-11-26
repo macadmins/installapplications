@@ -6,8 +6,8 @@
 	<string>com.erikng.installapplications</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/bin/python</string>
-		<string>/Library/Application Support/installapplications/installapplications.py</string>
+		<string>/Library/installapplications/Python.framework/Versions/3.7/bin/python3</string>
+		<string>/Library/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
 		<!-- <string>--iapath</string> -->
@@ -31,8 +31,8 @@
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StandardOutPath</key>
-	<string>/var/log/installapplications.log</string>
+	<string>/private/var/log/installapplications.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/log/installapplications.log</string>
+	<string>/private/var/log/installapplications.log</string>
 </dict>
 </plist>
