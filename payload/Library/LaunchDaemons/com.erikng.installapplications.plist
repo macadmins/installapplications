@@ -31,8 +31,8 @@
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StandardOutPath</key>
-	<string>/private/var/log/installapplications.log</string>
+	<string>/var/log/installapplications/installapplications.log</string>
 	<key>StandardErrorPath</key>
-	<string>/private/var/log/installapplications.log</string>
+	<string>/var/log/installapplications/installapplications.log</string>
 </dict>
 </plist>

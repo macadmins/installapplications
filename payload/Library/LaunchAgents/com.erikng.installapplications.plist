@@ -18,11 +18,11 @@
        <true/>
      </dict>
   </dict>
-  <key>OnDemand</key>
-  <true/>
+	<key>OnDemand</key>
+	<true/>
 	<key>StandardOutPath</key>
-	<string>/var/tmp/installapplications/installapplications.user.log</string>
+	<string>/var/log/installapplications/installapplications.user.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/tmp/installapplications/installapplications.user.log</string>
+	<string>/var/log/installapplications/installapplications.user.log</string>
 </dict>
 </plist>
