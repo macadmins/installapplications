@@ -1,7 +1,7 @@
 #!/Library/installapplications/Python.framework/Versions/3.7/bin/python3
 # encoding: utf-8
 #
-# Copyright 2009-2020 Erik Gomez.
+# Copyright 2009-Present Erik Gomez.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -415,6 +415,7 @@ def main():
     iapath = opts.iapath
     iauserscriptpath = os.path.join(iapath, 'userscripts')
     iatmppath = '/var/tmp/installapplications'
+    ialogpath = '/var/log/installapplications'
     iaslog('InstallApplications path: ' + str(iapath))
     ldidentifier = opts.ldidentifier
     ldidentifierplist = opts.ldidentifier + '.plist'
@@ -443,6 +444,10 @@ def main():
         else:
             iaslog('Failed to run script!')
             sys.exit(1)
+    else:
+        # Ensure the log path is writable by all before launchagent tries to do anything
+        if os.path.isdir(ialogpath):
+            os.chmod(ialogpath, 0o777)
 
     # Ensure the directories exist
     if not os.path.isdir(iauserscriptpath):
@@ -582,11 +587,11 @@ def main():
                     depnotifystring = 'depnotifycmd = ' \
                         """['/usr/bin/open', '""" + depnotifypath + "']"
                 iaslog('Launching DEPNotify with: %s' % (depnotifystring))
-                depnotifyscript = "#!/usr/bin/python"
+                depnotifyscript = "#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3"
                 depnotifyscript += '\n' + "import subprocess"
                 depnotifyscript += '\n' + depnotifystring
                 depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
-                with open(depnotifyscriptpath, 'wb') as f:
+                with open(depnotifyscriptpath, 'w') as f:
                     f.write(depnotifyscript)
                 os.chmod(depnotifyscriptpath, 0o777)
                 touch(userscripttouchpath)
