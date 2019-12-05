@@ -63,24 +63,23 @@ def getpkginfopath(filename):
 def extractpkginfo(filename):
     '''Takes input of a file path and returns a file path to the
     extracted PackageInfo file.'''
+    cwd = os.getcwd()
+
     if not os.path.isfile(filename):
         return
     else:
         tmpFolder = tempfile.mkdtemp()
+        os.chdir(tmpFolder)
         # need to get path from BOM
         pkgInfoPath = getpkginfopath(filename)
 
         extractedPkgInfoPath = os.path.join(tmpFolder, pkgInfoPath)
-        cmd = [
-            '/usr/bin/xar',
-            '-x',
-            '-C', tmpFolder,
-            '-f', filename,
-            pkgInfoPath]
+        cmd = ['/usr/bin/xar', '-xf', filename, pkgInfoPath]
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         out, err = proc.communicate()
+        os.chdir(cwd)
         return extractedPkgInfoPath
 
 
@@ -196,10 +195,10 @@ def main():
         if itemType in ('rootscript', 'userscript'):
             if itemType == 'userscript':
                 # Pass the userscripts folder path
-                itemJson['file'] = '/Library/Application Support/'\
+                itemJson['file'] = '/Library/'\
                     'installapplications/userscripts/%s' % fileName
             else:
-                itemJson['file'] = '/Library/Application Support/'\
+                itemJson['file'] = '/Library/'\
                     'installapplications/%s' % fileName
             # Check crappy way of doing booleans
             try:
@@ -218,7 +217,7 @@ def main():
         # If packages, we need the version and packageid
         elif itemType == 'package':
             (pkgId, pkgVersion) = getpkginfo(filePath)
-            itemJson['file'] = '/Library/Application Support/'\
+            itemJson['file'] = '/Library/'\
                 'installapplications/%s' % fileName
             itemJson['packageid'] = pkgId
             itemJson['version'] = pkgVersion
