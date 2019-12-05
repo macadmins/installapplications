@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Generate Json file for installapplications
@@ -57,7 +57,7 @@ def getpkginfopath(filename):
             elif entry.endswith('.pkg/PackageInfo'):
                 return entry
     else:
-        print "Error: %s while extracting BOM for %s" % (err, filename)
+        print("Error: %s while extracting BOM for %s" % (err, filename))
 
 
 def extractpkginfo(filename):
@@ -156,11 +156,11 @@ def main():
         elif fileExt == '.pkg':
             itemJson['type'] = itemType = 'package'
         else:
-            print 'Could not determine package type for item or unsupported: \
-            %s' % str(item)
+            print('Could not determine package type for item or unsupported: \
+            %s' % str(item))
             exit(1)
         if itemType not in ('package', 'rootscript', 'userscript'):
-            print 'item-type malformed: %s' % str(item['item-type'])
+            print('item-type malformed: %s' % str(item['item-type']))
             exit(1)
 
         # Determine the stage of the item to process - default to userland
@@ -170,7 +170,7 @@ def main():
                 itemStage = item['item-stage']
                 pass
             else:
-                print 'item-stage malformed: %s' % str(item['item-stage'])
+                print('item-stage malformed: %s' % str(item['item-stage']))
                 exit(1)
         except KeyError:
             itemStage = 'userland'
@@ -208,8 +208,8 @@ def main():
                     if item['script-do-not-wait'] in ('true', 'True', '1'):
                         itemJson['donotwait'] = True
                 else:
-                    print 'script-do-not-wait malformed: %s ' % str(
-                    item['script-do-not-wait'])
+                    print('script-do-not-wait malformed: %s ' % str(
+                    item['script-do-not-wait']))
                     exit(1)
             except:
                 itemJson['donotwait'] = False
@@ -237,10 +237,10 @@ def main():
         with open(savePath, 'w') as outFile:
             json.dump(stages, outFile, sort_keys=True, indent=2)
     except IOError:
-        print '[Error] Not a valid directory: %s' % savePath
+        print('[Error] Not a valid directory: %s' % savePath)
         exit(1)
 
-    print 'Json saved to %s' % savePath
+    print('Json saved to %s' % savePath)
 
 
 if __name__ == '__main__':
