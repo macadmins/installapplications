@@ -615,8 +615,8 @@ def main():
             if stage == 'userland':
                 if len(iajson['userland']) > 0:
                     while (getconsoleuser()[0] is None
-                           or getconsoleuser()[0] == u'loginwindow'
-                           or getconsoleuser()[0] == u'_mbsetupuser'):
+                           or getconsoleuser()[0] == 'loginwindow'
+                           or getconsoleuser()[0] == '_mbsetupuser'):
                         iaslog('Detected SetupAssistant in userland '
                                'stage - delaying install until user '
                                'session.')
