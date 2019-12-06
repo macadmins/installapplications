@@ -68,7 +68,7 @@ def pkgregex(pkgpath):
         pkgname = re.compile(r"[^/]+$").search(pkgpath).group(0)
         return pkgname
     except AttributeError as IndexError:
-        return packagepath
+        return pkgpath
 
 
 def installpackage(packagepath):
