@@ -664,14 +664,13 @@ def main():
                 if stage == 'preflight':
                     preflightrun = runrootscript(path, donotwait)
                     if preflightrun:
-                        iaslog('Preflight passed all checks. Skipping run.'
-                                )
+                        iaslog('Preflight passed all checks. Skipping run.')
                         userid = str(getconsoleuser()[1])
                         cleanup(iapath, ialdpath, ldidentifier, ialapath,
                                 laidentifier, userid, reboot)
                     else:
                         iaslog('Preflight did not pass all checks. '
-                                'Continuing run.')
+                               'Continuing run.')
                         continue
 
                 runrootscript(path, donotwait)
