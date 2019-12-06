@@ -6,8 +6,8 @@
 	<string>com.erikng.installapplications</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/bin/python</string>
-		<string>/Library/Application Support/installapplications/installapplications.py</string>
+		<string>/Library/installapplications/Python.framework/Versions/3.7/bin/python3</string>
+		<string>/Library/installapplications/installapplications.py</string>
 		<string>--userscript</string>
 	</array>
 	<key>KeepAlive</key>
@@ -18,11 +18,11 @@
        <true/>
      </dict>
   </dict>
-  <key>OnDemand</key>
-  <true/>
+	<key>OnDemand</key>
+	<true/>
 	<key>StandardOutPath</key>
-	<string>/var/tmp/installapplications/installapplications.user.log</string>
+	<string>/var/log/installapplications/installapplications.user.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/tmp/installapplications/installapplications.user.log</string>
+	<string>/var/log/installapplications/installapplications.user.log</string>
 </dict>
 </plist>

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Generate Json file for installapplications
@@ -57,30 +57,29 @@ def getpkginfopath(filename):
             elif entry.endswith('.pkg/PackageInfo'):
                 return entry
     else:
-        print "Error: %s while extracting BOM for %s" % (err, filename)
+        print("Error: %s while extracting BOM for %s" % (err, filename))
 
 
 def extractpkginfo(filename):
     '''Takes input of a file path and returns a file path to the
     extracted PackageInfo file.'''
+    cwd = os.getcwd()
+
     if not os.path.isfile(filename):
         return
     else:
         tmpFolder = tempfile.mkdtemp()
+        os.chdir(tmpFolder)
         # need to get path from BOM
         pkgInfoPath = getpkginfopath(filename)
 
         extractedPkgInfoPath = os.path.join(tmpFolder, pkgInfoPath)
-        cmd = [
-            '/usr/bin/xar',
-            '-x',
-            '-C', tmpFolder,
-            '-f', filename,
-            pkgInfoPath]
+        cmd = ['/usr/bin/xar', '-xf', filename, pkgInfoPath]
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         out, err = proc.communicate()
+        os.chdir(cwd)
         return extractedPkgInfoPath
 
 
@@ -157,11 +156,11 @@ def main():
         elif fileExt == '.pkg':
             itemJson['type'] = itemType = 'package'
         else:
-            print 'Could not determine package type for item or unsupported: \
-            %s' % str(item)
+            print('Could not determine package type for item or unsupported: \
+            %s' % str(item))
             exit(1)
         if itemType not in ('package', 'rootscript', 'userscript'):
-            print 'item-type malformed: %s' % str(item['item-type'])
+            print('item-type malformed: %s' % str(item['item-type']))
             exit(1)
 
         # Determine the stage of the item to process - default to userland
@@ -171,7 +170,7 @@ def main():
                 itemStage = item['item-stage']
                 pass
             else:
-                print 'item-stage malformed: %s' % str(item['item-stage'])
+                print('item-stage malformed: %s' % str(item['item-stage']))
                 exit(1)
         except KeyError:
             itemStage = 'userland'
@@ -196,10 +195,10 @@ def main():
         if itemType in ('rootscript', 'userscript'):
             if itemType == 'userscript':
                 # Pass the userscripts folder path
-                itemJson['file'] = '/Library/Application Support/'\
+                itemJson['file'] = '/Library/'\
                     'installapplications/userscripts/%s' % fileName
             else:
-                itemJson['file'] = '/Library/Application Support/'\
+                itemJson['file'] = '/Library/'\
                     'installapplications/%s' % fileName
             # Check crappy way of doing booleans
             try:
@@ -209,8 +208,8 @@ def main():
                     if item['script-do-not-wait'] in ('true', 'True', '1'):
                         itemJson['donotwait'] = True
                 else:
-                    print 'script-do-not-wait malformed: %s ' % str(
-                    item['script-do-not-wait'])
+                    print('script-do-not-wait malformed: %s ' % str(
+                    item['script-do-not-wait']))
                     exit(1)
             except:
                 itemJson['donotwait'] = False
@@ -218,7 +217,7 @@ def main():
         # If packages, we need the version and packageid
         elif itemType == 'package':
             (pkgId, pkgVersion) = getpkginfo(filePath)
-            itemJson['file'] = '/Library/Application Support/'\
+            itemJson['file'] = '/Library/'\
                 'installapplications/%s' % fileName
             itemJson['packageid'] = pkgId
             itemJson['version'] = pkgVersion
@@ -238,10 +237,10 @@ def main():
         with open(savePath, 'w') as outFile:
             json.dump(stages, outFile, sort_keys=True, indent=2)
     except IOError:
-        print '[Error] Not a valid directory: %s' % savePath
+        print('[Error] Not a valid directory: %s' % savePath)
         exit(1)
 
-    print 'Json saved to %s' % savePath
+    print('Json saved to %s' % savePath)
 
 
 if __name__ == '__main__':

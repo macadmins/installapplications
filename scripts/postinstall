@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3
 # encoding: utf-8
 #
-# Copyright 2009-2017 Erik Gomez.
+# Copyright 2009-Present Erik Gomez.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ def main():
         if os.path.isfile(file):
             pass
         else:
-            print 'File does not exist: %s' % file
+            print('File does not exist: %s' % file)
             sys.exit(1)
     currentuseruid = getconsoleuser()
     launchctl('/bin/launchctl', 'load', ldpath)
-    if (currentuseruid[0] is None or currentuseruid[0] == u'loginwindow'
-            or currentuseruid[0] == u'_mbsetupuser'):
+    if (currentuseruid[0] is None or currentuseruid[0] == 'loginwindow'
+            or currentuseruid[0] == '_mbsetupuser'):
         pass
     else:
         launchctl('/bin/launchctl', 'asuser', str(currentuseruid[1]),
