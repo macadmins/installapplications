@@ -68,7 +68,7 @@ def pkgregex(pkgpath):
         pkgname = re.compile(r"[^/]+$").search(pkgpath).group(0)
         return pkgname
     except AttributeError as IndexError:
-        return packagepath
+        return pkgpath
 
 
 def installpackage(packagepath):
@@ -305,7 +305,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         # Fix script permissions.
         if os.path.splitext(path)[1] != ".pkg":
             os.chmod(path, 0o755)
-        if type is 'userscript':
+        if type == 'userscript':
             os.chmod(path, 0o777)
 
 
@@ -648,7 +648,7 @@ def main():
                             if depnotifystatus:
                                 deplog('Status: Installing: %s' % (name))
                     # Install the package
-                    installerstatus = installpackage(item['file'])
+                    installpackage(item['file'])
             elif type == 'rootscript':
                 if 'url' in item:
                     download_if_needed(item, stage, type, opts,
@@ -664,14 +664,13 @@ def main():
                 if stage == 'preflight':
                     preflightrun = runrootscript(path, donotwait)
                     if preflightrun:
-                        iaslog('Preflight passed all checks. Skipping run.'
-                                )
+                        iaslog('Preflight passed all checks. Skipping run.')
                         userid = str(getconsoleuser()[1])
                         cleanup(iapath, ialdpath, ldidentifier, ialapath,
                                 laidentifier, userid, reboot)
                     else:
                         iaslog('Preflight did not pass all checks. '
-                                'Continuing run.')
+                               'Continuing run.')
                         continue
 
                 runrootscript(path, donotwait)
