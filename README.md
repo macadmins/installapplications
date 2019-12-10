@@ -4,7 +4,7 @@
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
 ## Embedded Python
-As of v2.0, InstallApplications now uses its own embedded python. This is due to Apple's upcoming removal of Python2.
+As of v2.0, InstallApplications now uses its own embedded python v3.8. This is due to Apple's upcoming removal of Python2.
 
 Gurl has been updated from the Munki 4.0 release and tested with HTTPs and Basic Authentication. Further testing would be appreciate by the community.
 
@@ -55,7 +55,7 @@ It is recommended that you run `2to3` against your scripts to make them python3 
 
 Then simply update the shebang on your python scripts to pin against the InstallApplications python framework.
 
-`#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3`
+`#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3`
 
 You can find an example on how this was done by looking at InstallApplications' own `postinstall`
 

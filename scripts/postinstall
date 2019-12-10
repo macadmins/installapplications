@@ -1,7 +1,6 @@
-#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3
-# encoding: utf-8
+#!/bin/zsh
 #
-# Copyright 2009-Present Erik Gomez.
+# Copyright 2019-Present Erik Gomez.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -15,48 +14,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Loads the InstallApplications LaunchAgent LaunchDaemon
-from SystemConfiguration import SCDynamicStoreCopyConsoleUser
-import os
-import subprocess
-import sys
+# If you change your daemon and agent file names, update the following two lines
+launch_agent_plist_name='com.erikng.installapplications'
+launch_daemon_plist_name='com.erikng.installapplications'
 
+# Base paths
+launch_agent_base_path='Library/LaunchAgents/'
+launch_daemon_base_path='Library/LaunchDaemons/'
 
-def getconsoleuser():
-    cfuser = SCDynamicStoreCopyConsoleUser(None, None, None)
-    return cfuser
+# Fail the install if the admin forgets to change their paths and they don't exist.
+if [ ! -e "$3/${launch_daemon_base_path}${launch_daemon_plist_name}" ] || [ ! -e "$3/${launch_agent_base_path}${launch_agent_plist_name}" ]; then
+  echo "LaunchAgent or Daemon missing, exiting"
+  exit 1
+fi
 
+# Load agent if installing to a running system
+if [ "$3" == "/" ] ; then
+  # Enable the LaunchDaemon
+  /bin/launchctl load "$3/${launch_daemon_base_path}${launch_daemon_plist_name}"
 
-def launchctl(*arg):
-    # Use *arg to pass unlimited variables to command.
-    cmd = arg
-    run = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, err = run.communicate()
-    return output
+  # Current console user information
+  console_user=$(/usr/bin/stat -f "%Su" /dev/console)
+  console_user_uid=$(/usr/bin/id -u "$console_user")
 
-
-def main():
-    lapath = os.path.join('/Library', 'LaunchAgents',
-                          'com.erikng.installapplications.plist')
-    ldpath = os.path.join('/Library', 'LaunchDaemons',
-                          'com.erikng.installapplications.plist')
-    # Fail the install if the admin forgets to change their paths and they
-    # don't exist.
-    for file in [lapath, ldpath]:
-        if os.path.isfile(file):
-            pass
-        else:
-            print('File does not exist: %s' % file)
-            sys.exit(1)
-    currentuseruid = getconsoleuser()
-    launchctl('/bin/launchctl', 'load', ldpath)
-    if (currentuseruid[0] is None or currentuseruid[0] == 'loginwindow'
-            or currentuseruid[0] == '_mbsetupuser'):
-        pass
-    else:
-        launchctl('/bin/launchctl', 'asuser', str(currentuseruid[1]),
-                  '/bin/launchctl', 'load', lapath)
-
-
-if __name__ == '__main__':
-    main()
+  # Only enable the LaunchAgent if there is a user logged in, otherwise rely on built in LaunchAgent behavior
+  if [[ -z "$console_user" ]]; then
+    echo "Did not detect user"
+  elif [[ "$console_user" == "loginwindow" ]]; then
+    echo "Detected Loginwindow Environment"
+  elif [[ "$console_user" == "_mbsetupuser" ]]; then
+    echo "Detect SetupAssistant Environment"
+  else
+    /bin/launchctl asuser "${console_user_uid}" /bin/launchctl load "${launch_agent_base_path}${launch_agent_plist_name}"
+  fi
+fi
