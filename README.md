@@ -6,7 +6,7 @@ InstallApplications is an alternative to tools like [PlanB](https://github.com/g
 ## Embedded Python
 As of v2.0, InstallApplications now uses its own embedded python. This is due to Apple's upcoming removal of Python2.
 
-Gurl has been updated from the Munki 3.7 release and tested with HTTPs and Basic Authentication. Further testing would be appreciate by the community.
+Gurl has been updated from the Munki 4.0 release and tested with HTTPs and Basic Authentication. Further testing would be appreciate by the community.
 
 ### Embedded Modules
 To help admins with their scripts, the following modules have been added:
