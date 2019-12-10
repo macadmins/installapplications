@@ -22,16 +22,16 @@ launch_daemon_plist_name='com.erikng.installapplications'
 launch_agent_base_path='Library/LaunchAgents/'
 launch_daemon_base_path='Library/LaunchDaemons/'
 
-# Fail the install if the admin forgets to change their paths and they don't exist.
-if [ ! -e "$3/${launch_daemon_base_path}${launch_daemon_plist_name}" ] || [ ! -e "$3/${launch_agent_base_path}${launch_agent_plist_name}" ]; then
-  echo "LaunchAgent or Daemon missing, exiting"
-  exit 1
-fi
-
 # Load agent if installing to a running system
-if [ "$3" == "/" ] ; then
+if [[ $3 == "/" ]] ; then
+  # Fail the install if the admin forgets to change their paths and they don't exist.
+  if [ ! -e "$3${launch_daemon_base_path}${launch_daemon_plist_name}.plist" ] || [ ! -e "$3${launch_agent_base_path}${launch_agent_plist_name}.plist" ]; then
+    echo "LaunchAgent or Daemon missing, exiting"
+    exit 1
+  fi
+
   # Enable the LaunchDaemon
-  /bin/launchctl load "$3/${launch_daemon_base_path}${launch_daemon_plist_name}"
+  /bin/launchctl load "$3${launch_daemon_base_path}${launch_daemon_plist_name}.plist"
 
   # Current console user information
   console_user=$(/usr/bin/stat -f "%Su" /dev/console)
@@ -45,6 +45,6 @@ if [ "$3" == "/" ] ; then
   elif [[ "$console_user" == "_mbsetupuser" ]]; then
     echo "Detect SetupAssistant Environment"
   else
-    /bin/launchctl asuser "${console_user_uid}" /bin/launchctl load "${launch_agent_base_path}${launch_agent_plist_name}"
+    /bin/launchctl asuser "${console_user_uid}" /bin/launchctl load "$3${launch_agent_base_path}${launch_agent_plist_name}.plist"
   fi
 fi

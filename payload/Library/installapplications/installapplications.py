@@ -1,4 +1,4 @@
-#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3
+#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3
 # encoding: utf-8
 #
 # Copyright 2009-Present Erik Gomez.
@@ -298,7 +298,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
             failsleft -= 1
             if failsleft == 0:
                 iaslog('Hash retry failed for %s: exiting!' % name)
-                sys.exit(1)
+                cleanup(1)
         # Time to install.
         iaslog('Hash validated - received: %s expected: %s' % (
                gethash(path), hash))
@@ -321,8 +321,7 @@ def touch(path):
         return None
 
 
-def cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
-            reboot):
+def cleanup(exit_code):
     # Attempt to remove the LaunchDaemon
     iaslog('Attempting to remove LaunchDaemon: ' + ialdpath)
     try:
@@ -354,7 +353,7 @@ def cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
         iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
         launchctl('/bin/launchctl', 'remove', ldidentifier)
         iaslog('Cleanup done. Exiting.')
-        sys.exit(0)
+        sys.exit(exit_code)
 
 
 def main():
@@ -412,20 +411,28 @@ def main():
     iaslog('Beginning InstallApplications run')
 
     # installapplications variables
+    global iapath
     iapath = opts.iapath
     iauserscriptpath = os.path.join(iapath, 'userscripts')
     iatmppath = '/var/tmp/installapplications'
     ialogpath = '/var/log/installapplications'
     iaslog('InstallApplications path: ' + str(iapath))
+    global ldidentifier
     ldidentifier = opts.ldidentifier
     ldidentifierplist = opts.ldidentifier + '.plist'
+    global ialdpath
     ialdpath = os.path.join('/Library/LaunchDaemons', ldidentifierplist)
     iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
+    global laidentifier
     laidentifier = opts.laidentifier
     laidentifierplist = opts.laidentifier + '.plist'
+    global ialapath
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
     iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
     depnotifystatus = True
+    global userid
+    userid = str(getconsoleuser()[1])
+    global reboot
     reboot = opts.reboot
 
     # hardcoded json fileurl path
@@ -667,8 +674,7 @@ def main():
                     if preflightrun:
                         iaslog('Preflight passed all checks. Skipping run.')
                         userid = str(getconsoleuser()[1])
-                        cleanup(iapath, ialdpath, ldidentifier, ialapath,
-                                laidentifier, userid, reboot)
+                        cleanup(0)
                     else:
                         iaslog('Preflight did not pass all checks. '
                                'Continuing run.')
@@ -706,9 +712,7 @@ def main():
                     'Skipping DEPNotify notification event due to completion.')
 
     # Cleanup and trigger a reboot if required.
-    userid = str(getconsoleuser()[1])
-    cleanup(iapath, ialdpath, ldidentifier, ialapath, laidentifier, userid,
-            reboot)
+    cleanup(0)
 
     if reboot:
         iaslog('Triggering reboot')
