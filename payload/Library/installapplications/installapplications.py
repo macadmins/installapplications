@@ -594,7 +594,7 @@ def main():
                     depnotifystring = 'depnotifycmd = ' \
                         """['/usr/bin/open', '""" + depnotifypath + "']"
                 iaslog('Launching DEPNotify with: %s' % (depnotifystring))
-                depnotifyscript = "#!/Library/installapplications/Python.framework/Versions/3.7/bin/python3"
+                depnotifyscript = "#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3"
                 depnotifyscript += '\n' + "import subprocess"
                 depnotifyscript += '\n' + depnotifystring
                 depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
