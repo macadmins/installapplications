@@ -342,6 +342,21 @@ def cleanup(exit_code):
     launchctl('/bin/launchctl', 'asuser', userid,
               '/bin/launchctl', 'remove', laidentifier)
 
+    # Trigger a delayed reboot of 5 seconds
+    if reboot:
+        iaslog('Triggering reboot')
+        rebootcmd = [
+            '/usr/bin/osascript',
+            '-e',
+            'delay 5',
+            '-e',
+            'tell application "System Events" to restart'
+        ]
+        try:
+            subprocess.Popen(rebootcmd, preexec_fn=os.setpgrp)
+        except:  # noqa
+            pass
+
     # Attempt to kill InstallApplications' path
     iaslog('Attempting to remove InstallApplications directory: ' + iapath)
     try:
@@ -349,11 +364,10 @@ def cleanup(exit_code):
     except:  # noqa
         pass
 
-    if not reboot:
-        iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
-        launchctl('/bin/launchctl', 'remove', ldidentifier)
-        iaslog('Cleanup done. Exiting.')
-        sys.exit(exit_code)
+    iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
+    launchctl('/bin/launchctl', 'remove', ldidentifier)
+    iaslog('Cleanup done. Exiting.')
+    sys.exit(exit_code)
 
 
 def main():
@@ -711,12 +725,8 @@ def main():
                 iaslog(
                     'Skipping DEPNotify notification event due to completion.')
 
-    # Cleanup and trigger a reboot if required.
+    # Cleanup and send good exit status
     cleanup(0)
-
-    if reboot:
-        iaslog('Triggering reboot')
-        subprocess.call(['/sbin/shutdown', '-r', 'now'])
 
 
 if __name__ == '__main__':
