@@ -49,15 +49,18 @@ def getpkginfopath(filename):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     (bom, err) = proc.communicate()
-    bom = bom.strip().split('\n')
-    if proc.returncode == 0:
+    
+    try:
+        # Decode the byte stream and convert to list
+        bom = bom.decode("utf-8").split()
         for entry in bom:
-            if entry.startswith('PackageInfo'):
+            if entry.startswith("PackageInfo"):
                 return entry
-            elif entry.endswith('.pkg/PackageInfo'):
+            elif entry.endswith(".pkg/PackageInfo"):
                 return entry
-    else:
+    except Exception as e:
         print("Error: %s while extracting BOM for %s" % (err, filename))
+        SystemExit("Error: %s" % e)
 
 
 def extractpkginfo(filename):
@@ -94,8 +97,10 @@ def getpkginfo(filename):
         dom = minidom.parse(pkgInfoPath)
         pkgRefs = dom.getElementsByTagName('pkg-info')
         for ref in pkgRefs:
-            pkgId = ref.attributes['identifier'].value.encode('UTF-8')
-            pkgVersion = ref.attributes['version'].value.encode('UTF-8')
+            # Removed UTF-8 encoding
+            pkgId = ref.attributes["identifier"].value
+            # Removed UTF-8 encoding
+            pkgVersion = ref.attributes["version"].value
             return pkgId, pkgVersion
 
 
