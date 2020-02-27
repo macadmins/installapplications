@@ -49,12 +49,12 @@ def getpkginfopath(filename):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     (bom, err) = proc.communicate()
-    bom = bom.strip().split('\n')
+    bom = bom.strip().split(b'\n')
     if proc.returncode == 0:
         for entry in bom:
-            if entry.startswith('PackageInfo'):
+            if entry.startswith(b'PackageInfo'):
                 return entry
-            elif entry.endswith('.pkg/PackageInfo'):
+            elif entry.endswith(b'.pkg/PackageInfo'):
                 return entry
     else:
         print("Error: %s while extracting BOM for %s" % (err, filename))
@@ -71,7 +71,7 @@ def extractpkginfo(filename):
         tmpFolder = tempfile.mkdtemp()
         os.chdir(tmpFolder)
         # need to get path from BOM
-        pkgInfoPath = getpkginfopath(filename)
+        pkgInfoPath = getpkginfopath(filename).decode('utf-8')
 
         extractedPkgInfoPath = os.path.join(tmpFolder, pkgInfoPath)
         cmd = ['/usr/bin/xar', '-xf', filename, pkgInfoPath]
@@ -94,8 +94,8 @@ def getpkginfo(filename):
         dom = minidom.parse(pkgInfoPath)
         pkgRefs = dom.getElementsByTagName('pkg-info')
         for ref in pkgRefs:
-            pkgId = ref.attributes['identifier'].value.encode('UTF-8')
-            pkgVersion = ref.attributes['version'].value.encode('UTF-8')
+            pkgId = ref.attributes['identifier'].value
+            pkgVersion = ref.attributes['version'].value
             return pkgId, pkgVersion
 
 
