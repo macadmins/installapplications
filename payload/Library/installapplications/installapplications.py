@@ -223,10 +223,13 @@ def runrootscript(pathname, donotwait):
             iaslog('Running Script: %s ' % (str(pathname)))
             (out, err) = proc.communicate()
             if err and proc.returncode == 0:
-                iaslog('Output from %s on stderr but ran successfully: %s' %
-                       (pathname, err))
+                iaslog('Output from %s on stderr but ran successfully' %
+                       pathname)
+                iaslog(err)
             elif proc.returncode > 0:
-                iaslog('Received non-zero exit code: ' + str(err))
+                iaslog('Received non-zero exit code: ' + str(proc.returncode))
+                if err:
+                    iaslog(err)
                 return False
     except OSError as err:
         iaslog('Failure running script: ' + str(err))
@@ -249,10 +252,13 @@ def runuserscript(iauserscriptpath):
             (out, err) = proc.communicate()
             if err and proc.returncode == 0:
                 iaslog(
-                    'Output from %s on stderr but ran successfully: %s' %
-                    (pathname, err))
+                    'Output from %s on stderr but ran successfully' %
+                    pathname)
+                iaslog(err)
             elif proc.returncode > 0:
-                iaslog('Failure running script: ' + str(err))
+                iaslog('Failure running script: ' + str(proc.returncode))
+                if err:
+                    iaslog(err)
                 return False
         except OSError as err:
             iaslog('Failure running script: ' + str(err))
