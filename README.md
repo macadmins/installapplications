@@ -20,12 +20,12 @@ Should the need come up for more modules, a PR should be made against the repo w
 
 ### Building embedded python framework
 
-To reduce the size of the git repository, you **must** create your own Python. To do this, simply run the `./build_python_framework.sh` script within the repository.
+To reduce the size of the git repository, you **must** create your own Python. To do this, simply run the `./build_python_framework` script within the repository.
 
 This process was tested on Catalina only.
 
 ```
-./build_python_framework.sh
+./build_python_framework
 
 Cloning relocatable-python tool from github...
 Cloning into '/tmp/relocatable-python-git'...
