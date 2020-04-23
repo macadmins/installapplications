@@ -64,6 +64,7 @@ You can find an example on how this was done by looking at InstallApplications' 
 - FileWave (please contact them for instructions)
 - MicroMDM
 - SimpleMDM
+- Mosyle
 
 ### A note about other MDMs
 While other MDMs could _technically_ install this tool, the mechanism greatly differs. Other MDMs currently use `InstallApplication` API to install their binary. From here, you could then install this tool.
