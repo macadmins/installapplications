@@ -90,7 +90,7 @@ def getpkginfo(filename):
         return "", ""
 
     else:
-        pkgInfoPath = extractpkginfo(filename)
+        pkgInfoPath = extractpkginfo(os.path.abspath(filename))
         dom = minidom.parse(pkgInfoPath)
         pkgRefs = dom.getElementsByTagName('pkg-info')
         for ref in pkgRefs:
