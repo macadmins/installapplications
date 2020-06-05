@@ -54,7 +54,11 @@ def deplog(text):
 
 
 def iaslog(text):
-    NSLog('[InstallApplications] ' + text)
+    try:
+        NSLog('[InstallApplications] ' + text)
+    except Exception:
+        print(text)
+        pass
 
 
 def getconsoleuser():
@@ -699,7 +703,7 @@ def main():
                 if stage == 'setupassistant':
                     iaslog('Detected setupassistant and user script. '
                            'User scripts cannot work in setupassistant stage! '
-                           'Removing %s') % path
+                           'Removing %s' % (path))
                     os.remove(path)
                     pass
                 if 'url' in item:
