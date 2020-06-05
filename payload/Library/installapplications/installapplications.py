@@ -700,15 +700,15 @@ def main():
 
                 runrootscript(path, donotwait)
             elif type == 'userscript':
+                if 'url' in item:
+                    download_if_needed(item, stage, type, opts,
+                                       depnotifystatus)
                 if stage == 'setupassistant':
                     iaslog('Detected setupassistant and user script. '
                            'User scripts cannot work in setupassistant stage! '
                            'Removing %s' % (path))
                     os.remove(path)
                     pass
-                if 'url' in item:
-                    download_if_needed(item, stage, type, opts,
-                                       depnotifystatus)
                 iaslog('Triggering LaunchAgent for user script: %s' % (path))
                 touch(userscripttouchpath)
                 if opts.depnotify:
