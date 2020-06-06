@@ -708,7 +708,7 @@ def main():
                            'User scripts cannot work in setupassistant stage! '
                            'Removing %s' % (path))
                     os.remove(path)
-                    pass
+                    continue
                 iaslog('Triggering LaunchAgent for user script: %s' % (path))
                 touch(userscripttouchpath)
                 if opts.depnotify:
