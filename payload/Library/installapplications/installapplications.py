@@ -1,4 +1,4 @@
-#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3
+#!/Library/installapplications/Python.framework/Versions/Current/bin/python3
 # encoding: utf-8
 #
 # Copyright 2009-Present Erik Gomez.
