@@ -6,7 +6,7 @@
 	<string>com.erikng.installapplications</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Library/installapplications/Python.framework/Versions/3.8/bin/python3</string>
+		<string>/Library/installapplications/Python.framework/Versions/Current/bin/python3</string>
 		<string>/Library/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>

@@ -55,7 +55,7 @@ It is recommended that you run `2to3` against your scripts to make them python3 
 
 Then simply update the shebang on your python scripts to pin against the InstallApplications python framework.
 
-`#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3`
+`#!/Library/installapplications/Python.framework/Versions/Current/bin/python3`
 
 You can find an example on how this was done by looking at InstallApplications' own `postinstall`
 
@@ -126,7 +126,7 @@ InstallApplications can now handle downloading and running scripts. Please see b
 For user scripts, you **must** set the folder path to the `userscripts` sub folder. This is due to the folder having world-wide permissions, allowing the LaunchAgent/User to delete the scripts when finished.
 
 ```json
-"file": "/Library/Application Support/installapplications/userscripts/userland_exampleuserscript.py",
+"file": "/Library/installapplications/userscripts/userland_exampleuserscript.py",
 ```
 
 ## Installing InstallApplications to another folder.
@@ -134,7 +134,7 @@ If you need to install IAs to another folder, you can modify the munki-pkg `payl
 
 ```xml
 <string>--iapath</string>
-<string>/Library/Application Support/installapplications</string>
+<string>/Library/installapplications</string>
 ```
 
 ### Configuring LaunchAgent/LaunchDaemon for your json
@@ -270,7 +270,7 @@ This guarantees that the package you place on the web for download is the packag
 
 ### JSON Structure
 The JSON structure is quite simple. You supply the following:
-- filepath (currently hardcoded to `/Library/Application Support/installapplications`)
+- filepath (currently hardcoded to `/Library/installapplications`)
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
 - name (define a name for the package, for debug logging and DEPNotify)
@@ -284,7 +284,7 @@ The following is an example JSON:
   "preflight": [
     {
       "donotwait": false,
-      "file": "/Library/Application Support/installapplications/preflight_script.py",
+      "file": "/Library/installapplications/preflight_script.py",
       "hash": "sha256 hash",
       "name": "Example Preflight Script",
       "type": "rootscript",
@@ -293,7 +293,7 @@ The following is an example JSON:
   ],
   "setupassistant": [
     {
-      "file": "/Library/Application Support/installapplications/setupassistant.pkg",
+      "file": "/Library/installapplications/setupassistant.pkg",
       "url": "https://domain.tld/setupassistant.pkg",
       "packageid": "com.package.setupassistant",
       "version": "1.0",
@@ -304,7 +304,7 @@ The following is an example JSON:
   ],
   "userland": [
     {
-      "file": "/Library/Application Support/installapplications/userland.pkg",
+      "file": "/Library/installapplications/userland.pkg",
       "url": "https://domain.tld/userland.pkg",
       "packageid": "com.package.userland",
       "version": "1.0",
@@ -313,14 +313,14 @@ The following is an example JSON:
       "type": "package"
     },
     {
-      "file": "/Library/Application Support/installapplications/userland_examplerootscript.py",
+      "file": "/Library/installapplications/userland_examplerootscript.py",
       "hash": "sha256 hash",
       "name": "Example Script",
       "type": "rootscript",
       "url": "https://domain.tld/userland_examplerootscript.py"
     },
     {
-      "file": "/Library/Application Support/installapplications/userscripts/userland_exampleuserscript.py",
+      "file": "/Library/installapplications/userscripts/userland_exampleuserscript.py",
       "hash": "sha256 hash",
       "name": "Example Script",
       "type": "userscript",
