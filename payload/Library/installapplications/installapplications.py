@@ -467,7 +467,8 @@ def main():
             os.remove(userscripttouchpath)
             sys.exit(0)
         else:
-            iaslog('Failed to run script!')
+            iaslog('Failed to run user script!')
+            os.remove(userscripttouchpath)
             sys.exit(1)
     else:
         # Ensure the log path is writable by all before launchagent tries to do anything
