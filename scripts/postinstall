@@ -22,35 +22,41 @@ launch_daemon_plist_name='com.erikng.installapplications'
 launch_agent_base_path='Library/LaunchAgents/'
 launch_daemon_base_path='Library/LaunchDaemons/'
 
-# Load agent if installing to a running system
+# Run the rest of this script only on a running OS
 if [[ $3 == "/" ]] ; then
-  # Fail the install if the admin forgets to change their paths and they don't exist.
-  if [ ! -e "$3${launch_daemon_base_path}${launch_daemon_plist_name}.plist" ] || [ ! -e "$3${launch_agent_base_path}${launch_agent_plist_name}.plist" ]; then
-    echo "LaunchAgent or Daemon missing, exiting"
-    exit 1
-  fi
+  base_path=$3
+elif [[ $3 == "/System/Volumes/Data" ]] ; then
+  base_path="$3/"
+else
+  exit 0
+fi
 
-  # Attempt to unload the daemon if it's stuck in memory but gone from disk
-  /bin/launchctl list | /usr/bin/grep 'installapplications'
-  if [[ $? -eq 0 ]] && [[ ! -e "$3${launch_daemon_base_path}${launch_daemon_plist_name}.plist" ]]; then
-    /bin/launchctl remove "${launch_daemon_plist_name}"
-  fi
+# Fail the install if the admin forgets to change their paths and they don't exist.
+if [ ! -e "$base_path${launch_daemon_base_path}${launch_daemon_plist_name}.plist" ] || [ ! -e "$base_path${launch_agent_base_path}${launch_agent_plist_name}.plist" ]; then
+  echo "LaunchAgent or Daemon missing, exiting"
+  exit 1
+fi
 
-  # Enable the LaunchDaemon
-  /bin/launchctl load "$3${launch_daemon_base_path}${launch_daemon_plist_name}.plist"
+# Attempt to unload the daemon if it's stuck in memory but gone from disk
+/bin/launchctl list | /usr/bin/grep 'installapplications'
+if [[ $? -eq 0 ]] && [[ ! -e "$base_path${launch_daemon_base_path}${launch_daemon_plist_name}.plist" ]]; then
+  /bin/launchctl remove "${launch_daemon_plist_name}"
+fi
 
-  # Current console user information
-  console_user=$(/usr/bin/stat -f "%Su" /dev/console)
-  console_user_uid=$(/usr/bin/id -u "$console_user")
+# Enable the LaunchDaemon
+/bin/launchctl load "$base_path${launch_daemon_base_path}${launch_daemon_plist_name}.plist"
 
-  # Only enable the LaunchAgent if there is a user logged in, otherwise rely on built in LaunchAgent behavior
-  if [[ -z "$console_user" ]]; then
-    echo "Did not detect user"
-  elif [[ "$console_user" == "loginwindow" ]]; then
-    echo "Detected Loginwindow Environment"
-  elif [[ "$console_user" == "_mbsetupuser" ]]; then
-    echo "Detect SetupAssistant Environment"
-  else
-    /bin/launchctl asuser "${console_user_uid}" /bin/launchctl load "$3${launch_agent_base_path}${launch_agent_plist_name}.plist"
-  fi
+# Current console user information
+console_user=$(/usr/bin/stat -f "%Su" /dev/console)
+console_user_uid=$(/usr/bin/id -u "$console_user")
+
+# Only enable the LaunchAgent if there is a user logged in, otherwise rely on built in LaunchAgent behavior
+if [[ -z "$console_user" ]]; then
+  echo "Did not detect user"
+elif [[ "$console_user" == "loginwindow" ]]; then
+  echo "Detected Loginwindow Environment"
+elif [[ "$console_user" == "_mbsetupuser" ]]; then
+  echo "Detect SetupAssistant Environment"
+else
+  /bin/launchctl asuser "${console_user_uid}" /bin/launchctl load "$base_path${launch_agent_base_path}${launch_agent_plist_name}.plist"
 fi
