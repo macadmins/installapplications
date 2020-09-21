@@ -193,7 +193,7 @@ In the LaunchDaemon add the following:
 ```
 
 #### Follow HTTP Redirects
-If you need to redirect InstallApplictions to fetch content from another URL, pass `--follow-redirects` in your LaunchDaemon. Useful for situations when content may be stored on a CDN and/or if your webserver returns pre-signed URLs for the object.
+If your webserver needs to redirect InstallApplictions to fetch content from another URL, pass `--follow-redirects` in your LaunchDaemon. Useful for situations where content may be stored on a CDN or object storage.
 
 ```xml
 <string>--follow-redirects</string>
