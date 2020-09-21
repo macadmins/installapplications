@@ -280,6 +280,9 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         if opts.headers:
             item.update({'additional_headers':
                          {'Authorization': opts.headers}})
+        # Check if we need to follow redirects.
+        if opts.follow_redirects:
+            item.update({'follow_redirects': True})
         # Download the file once:
         iaslog('Starting download: %s' % (urllib.parse.unquote(itemurl)))
         if opts.depnotify:
@@ -404,6 +407,9 @@ def main():
     o.add_option('--userscript', default=None,
                  help=('Optional: Trigger a user script run.'),
                  action='store_true')
+    o.add_option('--follow-redirects', default=False,
+                 help=('Optional: Follow HTTP redirects.'),
+                 action='store_true')
 
     opts, args = o.parse_args()
 
@@ -516,6 +522,10 @@ def main():
     if opts.headers:
         headers = {'Authorization': opts.headers}
         json_data.update({'additional_headers': headers})
+
+    # Check if we need to follow redirects.
+    if opts.follow_redirects:
+        item.update({'follow_redirects': True})
 
     # Delete the bootstrap file if it exists, to ensure it's up to date.
     if not opts.skip_validation:
