@@ -192,6 +192,13 @@ In the LaunchDaemon add the following:
 <string>Basic dGVzdDp0ZXN0</string>
 ```
 
+#### Follow HTTP Redirects
+If your webserver needs to redirect InstallApplictions to fetch content from another URL, pass `--follow-redirects` in your LaunchDaemon. Useful for situations where content may be stored on a CDN or object storage.
+
+```xml
+<string>--follow-redirects</string>
+```
+
 ### DEPNotify
 InstallApplications can work in conjunction with DEPNotify to automatically create and manipulate the progress bar.
 
