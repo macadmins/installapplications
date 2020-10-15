@@ -18,8 +18,8 @@
        <true/>
      </dict>
   </dict>
-	<key>OnDemand</key>
-	<true/>
+  <key>OnDemand</key>
+  <true/>
 	<key>StandardOutPath</key>
 	<string>/var/log/installapplications/installapplications.user.log</string>
 	<key>StandardErrorPath</key>

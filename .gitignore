@@ -1,3 +1,6 @@
+# our build directory
+build/
+# Python stuff
 *.pyc
 *.DS_Store
 *.framework

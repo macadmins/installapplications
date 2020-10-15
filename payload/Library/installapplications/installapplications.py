@@ -226,6 +226,7 @@ def runrootscript(pathname, donotwait):
                                     stderr=subprocess.PIPE)
             iaslog('Running Script: %s ' % (str(pathname)))
             (out, err) = proc.communicate()
+            iaslog('Output from %s: %s' % (pathname, out))
             if err and proc.returncode == 0:
                 iaslog('Output from %s on stderr but ran successfully: %s' %
                        (pathname, err))
@@ -251,6 +252,7 @@ def runuserscript(iauserscriptpath):
                                     stderr=subprocess.PIPE)
             iaslog('Running Script: %s ' % (str(pathname)))
             (out, err) = proc.communicate()
+            iaslog('Output from %s: %s' % (pathname, out))
             if err and proc.returncode == 0:
                 iaslog(
                     'Output from %s on stderr but ran successfully: %s' %
