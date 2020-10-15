@@ -55,7 +55,7 @@ def deplog(text):
 
 def iaslog(text):
     try:
-        NSLog('[InstallApplications] ' + text)
+        NSLog('[InstallApplications] %s' % text)
     except Exception:
         print(text)
         pass
@@ -220,21 +220,24 @@ def runrootscript(pathname, donotwait):
         if donotwait:
             iaslog('Do not wait triggered')
             proc = subprocess.Popen(pathname)
-            iaslog('Running Script: %s ' % (str(pathname)))
+            iaslog('Running Script: %s ' % pathname)
         else:
+            iaslog('Running Script: %s ' % pathname)
             proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
-            iaslog('Running Script: %s ' % (str(pathname)))
             (out, err) = proc.communicate()
-            iaslog('Output from %s: %s' % (pathname, out))
+            iaslog('Output on stdout:')
+            iaslog(out.decode('utf-8'))
             if err and proc.returncode == 0:
-                iaslog('Output from %s on stderr but ran successfully: %s' %
-                       (pathname, err))
+                iaslog('Output on stderr but ran successfully:')
+                iaslog(err.decode('utf-8'))
             elif proc.returncode > 0:
-                iaslog('Received non-zero exit code: ' + str(err))
+                iaslog('Received non-zero exit code:')
+                iaslog(err.decode('utf-8'))
                 return False
     except OSError as err:
-        iaslog('Failure running script: ' + str(err))
+        iaslog('Failure running script:')
+        iaslog(str(err.decode('utf-8')))
         return False
     return True
 
@@ -248,20 +251,22 @@ def runuserscript(iauserscriptpath):
             os.remove(pathname)
             return True
         try:
+            iaslog('Running Script: %s ' % pathname)
             proc = subprocess.Popen(pathname, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
-            iaslog('Running Script: %s ' % (str(pathname)))
             (out, err) = proc.communicate()
-            iaslog('Output from %s: %s' % (pathname, out))
+            iaslog('Output on stdout:')
+            iaslog(out.decode('utf-8'))
             if err and proc.returncode == 0:
-                iaslog(
-                    'Output from %s on stderr but ran successfully: %s' %
-                    (pathname, err))
+                iaslog('Output on stderr but ran successfully:')
+                iaslog(err.decode('utf-8'))
             elif proc.returncode > 0:
-                iaslog('Failure running script: ' + str(err))
+                iaslog('Received non-zero exit code:')
+                iaslog(err.decode('utf-8'))
                 return False
         except OSError as err:
-            iaslog('Failure running script: ' + str(err))
+            iaslog('Failure running script:')
+            iaslog(str(err.decode('utf-8')))
             return False
         os.remove(pathname)
         return True
@@ -286,7 +291,7 @@ def download_if_needed(item, stage, type, opts, depnotifystatus):
         if opts.follow_redirects:
             item.update({'follow_redirects': True})
         # Download the file once:
-        iaslog('Starting download: %s' % (urllib.parse.unquote(itemurl)))
+        iaslog('Starting download: %s' % urllib.parse.unquote(itemurl))
         if opts.depnotify:
             if stage == 'setupassistant':
                 iaslog('Skipping DEPNotify notification due to setupassistant.'
@@ -332,22 +337,22 @@ def touch(path):
 
 def cleanup(exit_code):
     # Attempt to remove the LaunchDaemon
-    iaslog('Attempting to remove LaunchDaemon: ' + ialdpath)
+    iaslog('Attempting to remove LaunchDaemon: %s' % ialdpath)
     try:
         os.remove(ialdpath)
     except:  # noqa
         pass
 
     # Attempt to remove the LaunchAgent
-    iaslog('Attempting to remove LaunchAgent: ' + ialapath)
+    iaslog('Attempting to remove LaunchAgent: %s' % ialapath)
     try:
         os.remove(ialapath)
     except:  # noqa
         pass
 
     # Attempt to remove the launchagent from the user's list
-    iaslog('Targeting user id for LaunchAgent removal: ' + userid)
-    iaslog('Attempting to remove LaunchAgent: ' + laidentifier)
+    iaslog('Targeting user id for LaunchAgent removal: %s' % userid)
+    iaslog('Attempting to remove LaunchAgent: %s' % laidentifier)
     launchctl('/bin/launchctl', 'asuser', userid,
               '/bin/launchctl', 'remove', laidentifier)
 
@@ -367,13 +372,13 @@ def cleanup(exit_code):
             pass
 
     # Attempt to kill InstallApplications' path
-    iaslog('Attempting to remove InstallApplications directory: ' + iapath)
+    iaslog('Attempting to remove InstallApplications directory: %s' % iapath)
     try:
         shutil.rmtree(iapath)
     except:  # noqa
         pass
 
-    iaslog('Attempting to remove LaunchDaemon: ' + ldidentifier)
+    iaslog('Attempting to remove LaunchDaemon: %s' % ldidentifier)
     launchctl('/bin/launchctl', 'remove', ldidentifier)
     iaslog('Cleanup done. Exiting.')
     sys.exit(exit_code)
@@ -442,19 +447,19 @@ def main():
     iauserscriptpath = os.path.join(iapath, 'userscripts')
     iatmppath = '/var/tmp/installapplications'
     ialogpath = '/var/log/installapplications'
-    iaslog('InstallApplications path: ' + str(iapath))
+    iaslog('InstallApplications path: %s' % iapath)
     global ldidentifier
     ldidentifier = opts.ldidentifier
     ldidentifierplist = opts.ldidentifier + '.plist'
     global ialdpath
     ialdpath = os.path.join('/Library/LaunchDaemons', ldidentifierplist)
-    iaslog('InstallApplications LaunchDaemon path: ' + str(ialdpath))
+    iaslog('InstallApplications LaunchDaemon path: %s' % ialdpath)
     global laidentifier
     laidentifier = opts.laidentifier
     laidentifierplist = opts.laidentifier + '.plist'
     global ialapath
     ialapath = os.path.join('/Library/LaunchAgents', laidentifierplist)
-    iaslog('InstallApplications LaunchAgent path: ' + str(ialapath))
+    iaslog('InstallApplications LaunchAgent path: %s' % ialapath)
     depnotifystatus = True
     global userid
     userid = str(getconsoleuser()[1])
@@ -463,7 +468,7 @@ def main():
 
     # hardcoded json fileurl path
     jsonpath = os.path.join(iapath, 'bootstrap.json')
-    iaslog('InstallApplications json path: ' + str(jsonpath))
+    iaslog('InstallApplications json path: %s' % jsonpath)
 
     # User script touch path
     userscripttouchpath = '/var/tmp/installapplications/.userscript'
@@ -504,7 +509,7 @@ def main():
                 if 'DEPNotifySkipStatus' in notification:
                     depnotifystatus = False
             else:
-                iaslog('Sending %s to DEPNotify' % (str(notification)))
+                iaslog('Sending %s to DEPNotify' % notification)
                 deplog(notification)
 
     # Make the temporary folder
@@ -537,8 +542,8 @@ def main():
 
     # If the file doesn't exist, grab it and wait half a second to save.
     while not os.path.isfile(jsonpath):
-        iaslog('Starting download: %s' % (urllib.parse.unquote(
-            json_data['url'])))
+        iaslog('Starting download: %s' % urllib.parse.unquote(
+            json_data['url']))
         downloadfile(json_data)
         time.sleep(0.5)
 
@@ -566,7 +571,7 @@ def main():
 
     # Process all stages
     for stage in stages:
-        iaslog('Beginning %s' % (stage))
+        iaslog('Beginning %s' % stage)
         if stage == 'preflight':
             # Ensure we actually have a preflight key in the json
             try:
@@ -624,8 +629,8 @@ def main():
                 else:
                     depnotifystring = 'depnotifycmd = ' \
                         """['/usr/bin/open', '""" + depnotifypath + "']"
-                iaslog('Launching DEPNotify with: %s' % (depnotifystring))
-                depnotifyscript = "#!/Library/installapplications/Python.framework/Versions/3.8/bin/python3"
+                iaslog('Launching DEPNotify with: %s' % depnotifystring)
+                depnotifyscript = "#!/Library/installapplications/Python.framework/Versions/Current/bin/python3"
                 depnotifyscript += '\n' + "import subprocess"
                 depnotifyscript += '\n' + depnotifystring
                 depnotifyscript += '\n' + 'subprocess.call(depnotifycmd)'
@@ -671,7 +676,7 @@ def main():
                 # pkg is not a required install
                 if LooseVersion(checkreceipt(packageid)) >= LooseVersion(
                         version) and not pkg_required:
-                    iaslog('Skipping %s - already installed.' % (name))
+                    iaslog('Skipping %s - already installed.' % name)
                 else:
                     # Download the package if it isn't already on disk.
                     download_if_needed(item, stage, type, opts,
@@ -692,7 +697,7 @@ def main():
                 if 'url' in item:
                     download_if_needed(item, stage, type, opts,
                                        depnotifystatus)
-                iaslog('Starting root script: %s' % (path))
+                iaslog('Starting root script: %s' % path)
                 try:
                     donotwait = item['donotwait']
                 except KeyError as e:
@@ -719,16 +724,16 @@ def main():
                 if stage == 'setupassistant':
                     iaslog('Detected setupassistant and user script. '
                            'User scripts cannot work in setupassistant stage! '
-                           'Removing %s' % (path))
+                           'Removing %s' % path)
                     os.remove(path)
                     continue
-                iaslog('Triggering LaunchAgent for user script: %s' % (path))
+                iaslog('Triggering LaunchAgent for user script: %s' % path)
                 touch(userscripttouchpath)
                 if opts.depnotify:
                     if depnotifystatus:
-                        deplog('Status: Installing: %s' % (name))
+                        deplog('Status: Installing: %s' % name)
                 while os.path.isfile(userscripttouchpath):
-                    iaslog('Waiting for user script to complete: %s' % (path))
+                    iaslog('Waiting for user script to complete: %s' % path)
                     time.sleep(0.5)
 
     # Trigger the final DEPNotify events
@@ -736,7 +741,7 @@ def main():
         for varg in opts.depnotify:
             notification = str(varg)
             if any(x in notification for x in deptriggers):
-                iaslog('Sending %s to DEPNotify' % (str(notification)))
+                iaslog('Sending %s to DEPNotify' % notification)
                 deplog(notification)
             else:
                 iaslog(
