@@ -54,3 +54,8 @@ else
     /bin/launchctl asuser "${console_user_uid}" /bin/launchctl remove "${launch_agent_plist_name}"
   fi
 fi
+
+# Install Rosetta 2 if running on Apple Silicon
+if [[ $(/usr/sbin/sysctl machdep.cpu.brand_string) =~ "Apple" ]]; then
+  echo "A" | /usr/sbin/softwareupdate --install-rosetta
+fi
