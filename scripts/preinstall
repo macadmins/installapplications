@@ -56,6 +56,6 @@ else
 fi
 
 # Install Rosetta 2 if running on Apple Silicon
-if [[ $(/usr/sbin/sysctl machdep.cpu.brand_string) =~ "Apple" ]]; then
-  echo "A" | /usr/sbin/softwareupdate --install-rosetta
+if [[ $(/usr/bin/arch) == "arm64" ]]; then
+  /usr/sbin/softwareupdate --install-rosetta --agree-to-license
 fi
