@@ -46,8 +46,7 @@ if [ -d "${PYTHONTOOLDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${PYTHONTOOLDIR}"
 fi
 echo "Cloning relocatable-python tool from github..."
-# git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
-git clone -b features https://github.com/erikng/relocatable-python.git "${PYTHONTOOLDIR}"
+git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
 CLONE_RESULT="$?"
 if [ "${CLONE_RESULT}" != "0" ]; then
     echo "Error cloning relocatable-python tool repo: ${CLONE_RESULT}" 1>&2
