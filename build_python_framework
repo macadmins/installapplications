@@ -46,7 +46,8 @@ if [ -d "${PYTHONTOOLDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${PYTHONTOOLDIR}"
 fi
 echo "Cloning relocatable-python tool from github..."
-git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
+# git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
+git clone -b u2 https://github.com/erikng/relocatable-python.git "${PYTHONTOOLDIR}"
 CLONE_RESULT="$?"
 if [ "${CLONE_RESULT}" != "0" ]; then
     echo "Error cloning relocatable-python tool repo: ${CLONE_RESULT}" 1>&2
@@ -64,9 +65,7 @@ fi
     --python-version "${PYTHON_VERSION}" \
     --os-version "${MACOS_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \
-    --destination "${FRAMEWORKDIR}" \
-    --upgrade-pip \
-    --install-wheel
+    --destination "${FRAMEWORKDIR}"
 
 # move the framework
 echo "Moving Python.framework to InstallApplications munki-pkg payload folder"
