@@ -10,21 +10,16 @@
 		<string>/Library/installapplications/installapplications.py</string>
 		<string>--jsonurl</string>
 		<string>https://domain.tld</string>
+		<!-- <string>--dry-run</string> -->
+		<!-- <string>--follow-redirects</string> -->
+		<!-- <string>--headers</string> -->
+		<!-- <<string>Basic ZXhhbXBsZV91c2VyOmV4YW1wbGVfcGFzc3dvcmQ=</string> -->
 		<!-- <string>--iapath</string> -->
-		<!-- <string>/Library/Application Support/installapplications</string> -->
+		<!-- <string>/Library/installapplications/installapplications</string> -->
 		<!-- <string>--laidentifier</string> -->
 		<!-- <string>com.erikng.installapplications</string> -->
 		<!-- <string>--ldidentifier</string> -->
 		<!-- <string>com.erikng.installapplications</string> -->
-		<!-- <string>--depnotify</string> -->
-		<!-- <string>DEPNotifySkipStatus</string> -->
-		<!-- <string>Command: WindowTitle: InstallApplications is Awesome!</string> -->
-		<!-- <string>Command: NotificationOn:</string> -->
-		<!-- <string>Command: Quit: Thanks for using InstallApplications and DEPNotify.</string> -->
-		<!-- <string>Command: WindowStyle: ActivateOnStep</string> -->
-		<!-- <string>DEPNotifyPath: /Applications/Utilities/DEPNotify.app</string> -->
-		<!-- <string>DEPNotifyArguments: -munki</string> -->
-		<!-- <string>DEPNotifyArguments: -munki -fullScreen</string> -->
 		<!-- <string>--reboot</string> -->
 		<!-- <string>--skip-validation</string> -->
 	</array>
