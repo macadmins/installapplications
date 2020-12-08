@@ -4,3 +4,4 @@ build/
 *.pyc
 *.DS_Store
 *.framework
+*.zip
