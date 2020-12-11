@@ -16,6 +16,7 @@ PYTHON_BASEURL="https://www.python.org/ftp/python/%s/python-%s${PYTHON_PRERELEAS
 PYTHONTOOLDIR="/tmp/relocatable-python-git"
 CONSOLEUSER=$(/usr/bin/stat -f "%Su" /dev/console)
 FRAMEWORKDIR="/Library/installapplications"
+PIPCACHEDIR="/Users/${CONSOLEUSER}/Library/Caches/pip"
 
 # Sanity checks.
 GIT=$(which git)
@@ -51,7 +52,8 @@ if [ -d "${PYTHONTOOLDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${PYTHONTOOLDIR}"
 fi
 echo "Cloning relocatable-python tool from github..."
-git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
+git clone -b u2 https://github.com/erikng/relocatable-python.git "${PYTHONTOOLDIR}"
+# git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
 CLONE_RESULT="$?"
 if [ "${CLONE_RESULT}" != "0" ]; then
     echo "Error cloning relocatable-python tool repo: ${CLONE_RESULT}" 1>&2
@@ -63,15 +65,19 @@ if [ -d "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework" ]; then
     /bin/rm -rf "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework"
 fi
 
+# remove existing library Python.framework if present
+if [ -d "${PIPCACHEDIR}" ]; then
+    echo "Removing pip cache to reduce framework build errors"
+    /usr/bin/sudo /bin/rm -rf "${PIPCACHEDIR}"
+fi
+
 # build the framework
 "${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
     --baseurl "${PYTHON_BASEURL}" \
     --python-version "${PYTHON_VERSION}" \
     --os-version "${MACOS_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \
-    --destination "${FRAMEWORKDIR}" \
-    --install-wheel \
-    --upgrade-pip
+    --destination "${FRAMEWORKDIR}"
 
 # move the framework
 echo "Moving Python.framework to InstallApplications munki-pkg payload folder"
