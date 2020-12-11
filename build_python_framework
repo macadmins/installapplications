@@ -31,14 +31,19 @@ if [ ! -f "${REQUIREMENTS}" ]; then
     exit 1
 fi
 
-# Create CPE framework path if not present
+# Create framework path if not present
 if [ ! -d "${FRAMEWORKDIR}" ]; then
     /usr/bin/sudo /bin/mkdir -p "${FRAMEWORKDIR}"
 fi
 
+# Give 777 permissions so we don't have to use sudo for other commands
+if [ -d "${FRAMEWORKDIR}" ]; then
+    /usr/bin/sudo /bin/chmod -R 777 "${FRAMEWORKDIR}"
+fi
+
 # remove existing library Python.framework if present
 if [ -d "${FRAMEWORKDIR}/Python.framework" ]; then
-    /usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}/Python.framework"
+    /bin/rm -rf "${FRAMEWORKDIR}/Python.framework"
 fi
 
 # clone our relocatable-python tool
@@ -59,7 +64,7 @@ if [ -d "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework" ]; then
 fi
 
 # build the framework
-/usr/bin/sudo "${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
+"${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
     --baseurl "${PYTHON_BASEURL}" \
     --python-version "${PYTHON_VERSION}" \
     --os-version "${MACOS_VERSION}" \
@@ -70,7 +75,7 @@ fi
 
 # move the framework
 echo "Moving Python.framework to InstallApplications munki-pkg payload folder"
-/usr/bin/sudo /bin/mv "${FRAMEWORKDIR}/Python.framework" "$TOOLSDIR/payload/${FRAMEWORKDIR}"
+/bin/mv "${FRAMEWORKDIR}/Python.framework" "$TOOLSDIR/payload/${FRAMEWORKDIR}"
 
 # take ownership of the payload folder
 echo "Taking ownership of the file to not break git"
@@ -83,3 +88,8 @@ echo "Adding ad-hoc code signing so the framework will run on Apple Silicon..."
 /usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/bin/" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
 /usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib/" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
 /usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib/" -type f -name "*dylib" -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+
+# Clean up workspace
+if [ -d "${FRAMEWORKDIR}" ]; then
+    /usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}"
+fi
