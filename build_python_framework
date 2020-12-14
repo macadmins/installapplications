@@ -103,3 +103,22 @@ echo "Adding ad-hoc code signing so the framework will run on Apple Silicon..."
 if [ -d "${FRAMEWORKDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}"
 fi
+
+# confirm truly universal
+TOTAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.dylib" | /usr/bin/wc -l | /usr/bin/xargs)
+UNIVERSAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.dylib" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
+if [ "${TOTAL_DYLIB}" != "${UNIVERSAL_DYLIB}" ] ; then
+  echo "Dynamic Libraries do not match, resulting in a non-universal Python framework."
+  echo "Total Dynamic Libraries found: ${TOTAL_DYLIB}"
+  echo "Universal Dynamic Libraries found: ${UNIVERSAL_DYLIB}"
+  exit 1
+fi
+
+TOTAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/wc -l | /usr/bin/xargs)
+UNIVERSAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
+if [ "${TOTAL_SO}" != "${UNIVERSAL_SO}" ] ; then
+  echo "Shared objects do not match, resulting in a non-universal Python framework."
+  echo "Total shared objects found: ${TOTAL_SO}"
+  echo "Universal shared objects found: ${UNIVERSAL_SO}"
+  exit 1
+fi
