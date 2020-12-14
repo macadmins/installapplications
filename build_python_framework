@@ -17,6 +17,7 @@ PYTHONTOOLDIR="/tmp/relocatable-python-git"
 CONSOLEUSER=$(/usr/bin/stat -f "%Su" /dev/console)
 FRAMEWORKDIR="/Library/installapplications"
 PIPCACHEDIR="/Users/${CONSOLEUSER}/Library/Caches/pip"
+XCODE_SELECT=$(/usr/bin/xcode-select -p)
 
 # Sanity checks.
 GIT=$(which git)
@@ -71,13 +72,16 @@ if [ -d "${PIPCACHEDIR}" ]; then
 fi
 
 # build the framework
+if [[ "${XCODE_SELECT}" != "/Applications/Xcode.app/Contents/Developer" ]]; then
+    echo "Building the universal python framework may result in errors due to Xcode not being installed"
+fi
 "${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
     --baseurl "${PYTHON_BASEURL}" \
     --python-version "${PYTHON_VERSION}" \
-    --upgrade-pip \
     --os-version "${MACOS_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \
-    --destination "${FRAMEWORKDIR}"
+    --destination "${FRAMEWORKDIR}" \
+    --upgrade-pip
 
 # move the framework
 echo "Moving Python.framework to InstallApplications munki-pkg payload folder"
