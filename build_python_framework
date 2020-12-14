@@ -114,6 +114,8 @@ if [ "${TOTAL_DYLIB}" != "${UNIVERSAL_DYLIB}" ] ; then
   exit 1
 fi
 
+echo "Dynamic Libraries are confirmed as universal"
+
 TOTAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/wc -l | /usr/bin/xargs)
 UNIVERSAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
 if [ "${TOTAL_SO}" != "${UNIVERSAL_SO}" ] ; then
@@ -122,3 +124,5 @@ if [ "${TOTAL_SO}" != "${UNIVERSAL_SO}" ] ; then
   echo "Universal shared objects found: ${UNIVERSAL_SO}"
   exit 1
 fi
+
+echo "Shared objects are confirmed as universal"
