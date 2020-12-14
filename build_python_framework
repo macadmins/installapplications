@@ -52,8 +52,7 @@ if [ -d "${PYTHONTOOLDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${PYTHONTOOLDIR}"
 fi
 echo "Cloning relocatable-python tool from github..."
-git clone -b u2 https://github.com/erikng/relocatable-python.git "${PYTHONTOOLDIR}"
-# git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
+git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
 CLONE_RESULT="$?"
 if [ "${CLONE_RESULT}" != "0" ]; then
     echo "Error cloning relocatable-python tool repo: ${CLONE_RESULT}" 1>&2
@@ -75,6 +74,7 @@ fi
 "${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
     --baseurl "${PYTHON_BASEURL}" \
     --python-version "${PYTHON_VERSION}" \
+    --upgrade-pip \
     --os-version "${MACOS_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \
     --destination "${FRAMEWORKDIR}"
