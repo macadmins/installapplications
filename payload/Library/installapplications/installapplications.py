@@ -498,7 +498,7 @@ def main():
 
     # Check if we need to follow redirects.
     if opts.follow_redirects:
-        item.update({'follow_redirects': True})
+        json_data.update({'follow_redirects': True})
 
     # Delete the bootstrap file if it exists, to ensure it's up to date.
     if not opts.skip_validation:
