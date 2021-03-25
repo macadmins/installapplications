@@ -133,8 +133,27 @@ def launchctl(*arg):
     output, err = run.communicate()
     return output
 
+def process_request_options(options):
+    """
+    Checks ia folder for a file that starts with middleware.
+    If the file exists options dict is changed.
+    Taken from:
+    https://github.com/munki/munki/blob/main/code/client/munkilib/fetch.py
+    """
+    ia_dir = os.path.realpath(os.path.dirname(sys.argv[0]))
+    for name in os.listdir(ia_dir):
+        if name.startswith('middleware'):
+            middleware_file = os.path.splitext(name)[0]
+    if middleware_file:
+        globals()['middleware'] = __import__(middleware_file,
+                                             fromlist=[middleware_file])
+        # middleware module must have this function
+        options = middleware.process_request_options(options)
+    return options
 
 def downloadfile(options):
+    # Process options if middleware exists
+    options = process_request_options(options)
     connection = gurl.Gurl.alloc().initWithOptions_(options)
     percent_complete = -1
     bytes_received = 0
@@ -270,6 +289,8 @@ def runuserscript(iauserscriptpath):
 
 
 def download_if_needed(item, stage, type, opts):
+    # Process item if middleware exists
+    item = process_request_options(item)
     # Check if the file exists and matches the expected hash.
     path = item['file']
     name = item['name']

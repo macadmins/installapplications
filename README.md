@@ -1,14 +1,17 @@
 # InstallApplications
+
 ![InstallApplications icon](/icon/installapplications.png?raw=true)
 
 InstallApplications is an alternative to tools like [PlanB](https://github.com/google/macops-planb) where you can dynamically download packages for use with `InstallApplication`. This is useful for DEP bootstraps, allowing you to have a significantly reduced initial package that can easily be updated without repackaging your initial package.
 
 ## Embedded Python
+
 As of v2.0, InstallApplications now uses its own embedded python v3.8. This is due to Apple's upcoming removal of Python2.
 
 Gurl has been updated from the Munki 4.0 release and tested with HTTPs and Basic Authentication. Further testing would be appreciate by the community.
 
 ### Embedded Modules
+
 To help admins with their scripts, the following modules have been added:
 PyObjC (required for gurl)
 Requests (for API driven tools)
@@ -16,6 +19,7 @@ Requests (for API driven tools)
 Should the need come up for more modules, a PR should be made against the repo with proper justification
 
 ### 2to3
+
 `installapplications.py` and `postinstall` have been ran through 2to3 to automatically convert for Python3 compatibility.
 
 ### Building embedded python framework
@@ -44,9 +48,11 @@ Moving Python.framework to InstallApplications payload folder
 ```
 
 ### Package size increases
+
 Unfortunately due to the embedded python, InstallApplications has significantly grown in size, from approximately 35Kb to 27.5 MB. The low size of InstallApplications has traditionally been one of it's greatest strengths, given how fragile `mdmclient` can be, but there is nothing that can be done here.
 
 ### Pinning python user/root scripts to embedded Python
+
 Python user/root scripts should be pinned to the embedded Python framework. Moving forward, **scripts not pinned will be unsupported**.
 
 It is recommended that you run `2to3` against your scripts to make them python3 compliant.
@@ -60,6 +66,7 @@ Then simply update the shebang on your python scripts to pin against the Install
 You can find an example on how this was done by looking at InstallApplications' own `postinstall`
 
 ## MDMs that support Custom DEP
+
 - AirWatch
 - FileWave (please contact them for instructions)
 - MicroMDM
@@ -68,6 +75,7 @@ You can find an example on how this was done by looking at InstallApplications' 
 - Jamf School
 
 ### A note about other MDMs
+
 While other MDMs could _technically_ install this tool, the mechanism greatly differs. Other MDMs currently use `InstallApplication` API to install their binary. From here, you could then install this tool.
 
 Unfortunately, by doing this, you lose many of the features of `InstallApplications`, the primary one being speed.
@@ -77,6 +85,7 @@ Example: Jamf Pro
 Jamf Pro would install the `jamf` binary first, rather than InstallApplications. An admin would need to scope a policy through the console in order to install this tool and it cannot be 100% validated that InstallApplications will be installed during the SetupAssistant process.
 
 ## How this process works:
+
 During a DEP SetupAssistant workflow (with a supported MDM), the following will happen:
 
 1. MDM will send a push request utilizing `InstallApplication` to inform the device of a package installation.
@@ -87,21 +96,27 @@ During a DEP SetupAssistant workflow (with a supported MDM), the following will 
 6. InstallApplications will gracefully exit and kill its process.
 
 ## Stages
+
 There are currently three stages:
 #### preflight ####
+
 This stage is designed to only work with a **single rootscript**. This stage is useful for running InstallApplications on previously deployed machines or if you simply want to re-run it.
 
 If the preflight script exits 0, InstallApplications will cleanup/remove itself, bypassing the setupassistant and userland stages.
 
 If the preflight script exits 1 or higher, InstallApplications will continue with the bootstrap process.
 #### setupassistant ####
+
 - Packages/rootscripts that should be prioritized for download/installation _and_ can be installed during SetupAssistant, where no user session is present.
+
 #### userland ####
+
 - Packages/rootscripts/userscripts that should be prioritized for download/installation but may need to be installed in the user's context. This could be your UI tooling that informs the user that a DEP workflow is being used. This stage will wait for a user session before installing.
 
 By utilizing setupassistant/userland, you can have **almost instant UI notifications** for your users.
 
 ## Notes
+
 - InstallApplications will only begin installing userland when a user session has been started. This is to reduce the likelihood of your packages attempting to start UI elements during SetupAssistant.
 
 ### Signing
@@ -121,6 +136,7 @@ Note that you cannot use a `Mac Developer:` signing identity as that is used for
 `An installer signing identity (not an application signing identity) is required for signing flat-style products.)`
 
 ### Downloading and running scripts
+
 InstallApplications can handle downloading and running scripts. Please see below for how to specify the json structure.
 
 For user scripts, you **must** set the folder path to the `userscripts` sub folder. This is due to the folder having world-wide permissions, allowing the LaunchAgent/User to delete the scripts when finished.
@@ -130,6 +146,7 @@ For user scripts, you **must** set the folder path to the `userscripts` sub fold
 ```
 
 ## Installing InstallApplications to another folder.
+
 If you need to install IAs to another folder, you can modify the munki-pkg `payload`, but you will also need to modify the launchdaemon plist's `iapath` argument.
 
 ```xml
@@ -138,6 +155,7 @@ If you need to install IAs to another folder, you can modify the munki-pkg `payl
 ```
 
 ### Configuring LaunchAgent/LaunchDaemon for your json
+
 Simply specify a url to your json file in the LaunchDaemon plist, located in the payload/Library/LaunchDaemons folder in the root of the project.
 
 ```xml
@@ -155,13 +173,17 @@ NOTE: If you alter the name of the LaunchAgent/LaunchDaemon or the Label, you wi
 ```
 
 #### Optional Reboot
+
 If after installing all of your packages, you want to force a reboot, simply uncomment the flag in the launchdaemon plist.
+
 ```xml
 <string>--reboot</string>
 ```
 
 #### Optional Skip Bootstrap.json validation
+
 If you would like to pre-package your bootstrap.json file into your package and not download it, simply uncomment the flag in the launchdaemon plist.
+
 ```xml
 <string>--skip-validation</string>
 ```
@@ -193,6 +215,7 @@ In the LaunchDaemon add the following:
 ```
 
 #### Follow HTTP Redirects
+
 If your webserver needs to redirect InstallApplictions to fetch content from another URL, pass `--follow-redirects` in your LaunchDaemon. Useful for situations where content may be stored on a CDN or object storage.
 
 ```xml
@@ -200,21 +223,58 @@ If your webserver needs to redirect InstallApplictions to fetch content from ano
 ```
 
 ### DEPNotify
+
 As of InstallApplications v2.0.2, the built in support for DEPNotify has been removed.
 
 Big Sur makes this code less stable. If you would like an example on how to launch DEPNotify with a user script, please see [depnotify_user_launcher.py](https://github.com/erikng/installapplicationsdemo/blob/master/installapplications/scripts/user/depnotify_user_launcher.py) at the installapplications demo GitHub.
 
 ### Logging
+
 All root actions are logged at `/private/var/log/installapplications.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
 
 All user actions are logged at `/var/tmp/installapplications/installapplications.user.log` as well as through NSLog. You can open up Console.app and search for `InstallApplications` to bring up all of the events.
 
+### Middleware
+
+Adapted from Munki's middleware [methodology](https://github.com/munki/munki/wiki/Middleware) and [code](https://github.com/munki/munki/blob/main/code/client/munkilib/fetch.py),
+
+This optional feature allows an admin to use third party code, or create their own code to manipulate InstallApplication's HTTP requests.
+
+#### Naming
+
+InstallApplications is looking for files the start with "middleware".
+Examples of good and bad middleware filenames:
+
+👍  middleware.py  
+👎  middleware  
+👎  my_middleware.py  
+👍  middleware_logic_taken_from_munki.py  
+
+#### Execution
+
+If you are using middleware, ensure the Python sha-bang is the same as InstallApplications, ie `#!/Library/installapplications/Python.framework/Versions/Current/bin/python3`.
+
+#### Location
+
+The middleware file must live in the same directory of InstallApplications folder (/Library/installapplications/), including your middleware in `payload/Library/installapplications/` should be sufficient enough to ensure its contained within the build package and receives proper permissions upon install.
+
+#### Requirements
+
+`process_request_options()` is the function that InstallApplications is looking for in the middleware. If InstallApplications doesn't find this function in the middleware it will abandon the processing of the url, and continue on.
+
+#### Middleware Notes
+
+- **Read:** [Munki's wiki page](https://github.com/munki/munki/wiki/Middleware) as this logic was taken directly from Munki, and utilizes the same underlying processes for modifying the url of an item.
+- **URL Overrides:** Install applications allows for the override of some options via the launchdaemon (see [Follow HTTP Redirects](#follow-http-redirects) for an example). The middleware processes items after the launchdaemon specified override is applied, meaning any manipulation to that via the middleware could override the specified options in the Launchd.
+
 ### Building a package
+
 This repository has been setup for use with [munkipkg](https://github.com/munki/munki-pkg). Use `munkipkg` to build your signed installer with the following command:
 
 `./munkipkg /path/to/repository`
 
 ### SHA256 hashes
+
 Each package must have a SHA256 hash stored in the JSON. You can easily create hashes with the following command:
 
 `/usr/bin/shasum -a 256 /path/to/pkg`
@@ -222,7 +282,9 @@ Each package must have a SHA256 hash stored in the JSON. You can easily create h
 This guarantees that the package you place on the web for download is the package that gets installed by InstallApplication. If the hash does not match, InstallApplication will attempt to re-download and re-check.
 
 ### JSON Structure
+
 The JSON structure is quite simple. You supply the following:
+
 - filepath (currently hardcoded to `/Library/installapplications`)
 - url (any domain, but it should ideally be https://)
 - hash (SHA256)
@@ -232,6 +294,7 @@ The JSON structure is quite simple. You supply the following:
 - type of item (currently `rootscript`, `package` or `userscript`)
 
 The following is an example JSON:
+
 ```json
 {
   "preflight": [
@@ -292,6 +355,7 @@ You may have more than one package and script in each stage. Packages and script
 Using `generatejson.py` you can automatically generate the json with the file, hash, and name keys populated (you'll need to upload the packages to a server and update the url keys).
 
 You can pass an unlimited amount of `--item` arguments, each one with the following meta-variables. Please note that currently _all_ of these meta-variables are **required**:
+
 * item-name - required, sets the display name that will show in DEPNotify
 * item-path - required, path on the local disk to the item you want to include
 * item-stage - required, defaults to userland if not specified
@@ -299,8 +363,8 @@ You can pass an unlimited amount of `--item` arguments, each one with the follow
 * item-url - required, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
 * script-do-not-wait - required, only applies to userscript and rootscript item-types. Defaults to false.
 
-
 Run the tool:
+
 ```
 python generatejson.py --base-url https://github.com --output ~/Desktop \
 --item \
