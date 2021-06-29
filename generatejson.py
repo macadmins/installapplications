@@ -125,7 +125,7 @@ def main():
     for item in args.item:
         processedItem = {}
         for itemOption in item:
-            values = itemOption.split('=')
+            values = itemOption.split('=', 1)
             processedItem[values[0]] = values[1]
         itemsToProcess.append(processedItem)
 
