@@ -230,6 +230,7 @@ The JSON structure is quite simple. You supply the following:
 - version of package (to check package receipts)
 - package id (to check for package receipts)
 - type of item (currently `rootscript`, `package` or `userscript`)
+- skip_if criteria to skip a pkg (currently `x86_64`, `intel`, `arm64` or `apple_silicon`)
 
 The following is an example JSON:
 ```json
@@ -263,6 +264,7 @@ The following is an example JSON:
       "version": "1.0",
       "hash": "sha256 hash",
       "name": "Stage 1 Package Name",
+      "skip_if": "x86_64",
       "type": "package"
     },
     {

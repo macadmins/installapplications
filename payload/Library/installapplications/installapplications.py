@@ -60,6 +60,30 @@ def getconsoleuser():
     return cfuser
 
 
+def is_apple_silicon():
+    """Returns True if we're running on Apple Silicon"""
+    # ref: https://github.com/munki/munki/commit/8d5472633d01eb1514a4255f2418b6100e44bef6
+    arch = os.uname()[4]
+    if arch == 'x86_64':
+        # we might be natively Intel64, or running under Rosetta.
+        # os.uname()[4] returns the current execution arch, which under Rosetta
+        # will be x86_64. Since what we want here is the _native_ arch, we're
+        # going to use a hack for now to see if we're natively arm64
+        uname_version = os.uname()[3]
+        if 'ARM64' in uname_version:
+            arch = 'arm64'
+    return arch == 'arm64'
+
+
+def validate_skip_if(criteria):
+    if 'arm64' in criteria or 'apple_silicon' in criteria:
+        return is_apple_silicon()
+    elif 'x86_64' in criteria or 'intel' in criteria:
+        return not is_apple_silicon()
+    else:
+        return False
+
+
 def pkgregex(pkgpath):
     try:
         # capture everything after last / in the pkg filepath
@@ -560,11 +584,18 @@ def main():
                     pkg_required = item['required']
                 except KeyError:
                     pkg_required = False
+                try:
+                    skip_if = item['skip_if']
+                except KeyError:
+                    skip_if = False
                 # Compare version of package with installed version and ensure
                 # pkg is not a required install
                 if LooseVersion(checkreceipt(packageid)) >= LooseVersion(
                         version) and not pkg_required:
                     iaslog('Skipping %s - already installed.' % name)
+                # Skip if a declared criteria is met
+                elif skip_if and validate_skip_if(skip_if):
+                    iaslog('Skipping %s - passes skip_if criteria: %s' % (name, skip_if))
                 else:
                     # Download the package if it isn't already on disk.
                     download_if_needed(item, stage, type, opts)
