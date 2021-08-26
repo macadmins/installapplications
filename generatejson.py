@@ -9,6 +9,7 @@
 # item-type='A type' \
 # item-url='A url' \
 # script-do-not-wait='A boolean' \
+# pkg-skip-if='A string' \
 # --base-url URL \
 # --output PATH
 
@@ -108,7 +109,8 @@ def build_item_dict(itemsToProcess, base_url):
             'item-stage': '',
             'item-type': '',
             'item-url': '',
-            'script-do-not-wait': ''
+            'script-do-not-wait': '',
+            'pkg-skip-if': ''
         },
         ...
     ]
@@ -210,6 +212,15 @@ def build_item_dict(itemsToProcess, base_url):
                 'installapplications/%s' % fileName
             itemJson['packageid'] = pkgId
             itemJson['version'] = pkgVersion
+            try:
+                # handle skipping based on architecture
+                if item['pkg-skip-if'] not in ('false', 'False', '0'):
+                    # Add the key to the item
+                    if item['pkg-skip-if'] in ('intel', 'x86_64',
+                                               'apple_silicon', 'arm64'):
+                        itemJson['skip_if'] = item['pkg-skip-if']
+            except:
+                pass
 
         # Append the info to the appropriate stage
         stages[itemStage].append(itemJson)
@@ -226,7 +237,8 @@ def main():
     parser.add_argument('--item', default=None, action='append', nargs=6,
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
-                            'item-type', 'item-url', 'script-do-not-wait'),
+                            'item-type', 'item-url', 'script-do-not-wait',
+                            'pkg-skip-if'),
                         help='Required: Options for item. All items are \
                         required. Scripts default to rootscript and stage \
                         Scripts default to rootscript and stage defaults to userland')
