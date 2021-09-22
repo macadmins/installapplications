@@ -170,6 +170,7 @@ def process_request_options(options):
     Taken from:
     https://github.com/munki/munki/blob/main/code/client/munkilib/fetch.py
     """
+    middleware_file = None
     ia_dir = os.path.realpath(os.path.dirname(sys.argv[0]))
     for name in os.listdir(ia_dir):
         if name.startswith('middleware'):
