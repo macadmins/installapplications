@@ -8,7 +8,7 @@
 
 TOOLSDIR=$(dirname $0)
 REQUIREMENTS="${TOOLSDIR}/py3_requirements.txt"
-MACOS_VERSION=11.0 # use 10.9 for non-universal
+MACOS_VERSION=10.9 # use 10.9 for non-universal, 11.0 for universal
 PYTHON_BIN_VERSION=3.9
 PYTHON_VERSION=3.9.1
 PYTHON_PRERELEASE_VERSION=
@@ -76,7 +76,6 @@ if [[ "${XCODE_SELECT}" != "/Applications/Xcode.app/Contents/Developer" ]]; then
     echo "Building the universal python framework may result in errors due to Xcode not being installed"
 fi
 "${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
-    --baseurl "${PYTHON_BASEURL}" \
     --python-version "${PYTHON_VERSION}" \
     --os-version "${MACOS_VERSION}" \
     --pip-requirements "${REQUIREMENTS}" \

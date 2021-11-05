@@ -1,6 +1,4 @@
 cffi==1.14.4
---no-binary cffi
 pycparser==2.20
 pyobjc==7.0.1
 xattr==0.9.7
---no-binary xattr

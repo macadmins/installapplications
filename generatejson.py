@@ -234,7 +234,7 @@ def main():
                         help='Base URL to where root dir is hosted')
     parser.add_argument('--output', default=None, action='store',
                         help='Required: Output directory to save json')
-    parser.add_argument('--item', default=None, action='append', nargs=6,
+    parser.add_argument('--item', default=None, action='append', nargs=7,
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait',
