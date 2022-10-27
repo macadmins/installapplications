@@ -131,7 +131,7 @@ def checkreceipt(packageid):
         output = proc.communicate()
         receiptout = output[0]
         if receiptout:
-            plist = plistlib.readPlistFromString(receiptout)
+            plist = plistlib.loads(receiptout)
             version = plist["pkg-version"]
         else:
             version = "0.0.0.0.0"
