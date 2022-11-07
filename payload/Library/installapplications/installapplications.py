@@ -677,9 +677,6 @@ def main():
                         "Skipping %s - passes skip_if criteria: %s" % (name, skip_if)
                     )
                 else:
-
-
-
                     # Download the package if it isn't already on disk.
                     download_if_needed(item, stage, type, opts)
 
