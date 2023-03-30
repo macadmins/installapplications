@@ -613,7 +613,7 @@ def main():
     # Process all stages
     for stage in stages:
         if stage not in ias_item_runtimes_dict.keys():
-                ias_item_runtimes_dict[stage] = {}
+            ias_item_runtimes_dict[stage] = {}
         iaslog("Beginning %s" % stage)
         if stage == "preflight":
             # Ensure we actually have a preflight key in the json
@@ -650,10 +650,10 @@ def main():
                         )
                         time.sleep(1)
 
-            if type == "package":
-                # Start package item runtime timer
-                package_runtime_start = time.time()
+            # Start item runtime timer
+            item_runtime_start = time.time()
 
+            if type == "package":
                 packageid = item["packageid"]
                 version = item["version"]
                 try:
@@ -683,14 +683,7 @@ def main():
                     iaslog("Installing %s from %s" % (name, path))
                     # Install the package
                     installpackage(item["file"])
-
-                # Log package item rumtime
-                write_item_total_runtime(stage, name, package_runtime_start)
-
             elif type == "rootscript":
-                # Start rootscript item runtime timer
-                rootscript_runtime_start = time.time()
-
                 if "url" in item:
                     download_if_needed(item, stage, type, opts)
                 iaslog("Starting root script: %s" % path)
@@ -709,14 +702,7 @@ def main():
                         continue
 
                 runrootscript(path, donotwait)
-
-                # Log rootscript item rumtime
-                write_item_total_runtime(stage, name, rootscript_runtime_start)
-
             elif type == "userscript":
-                # Start userscript item runtime timer
-                userscript_runtime_start = time.time()
-
                 if "url" in item:
                     download_if_needed(item, stage, type, opts)
                 if stage == "setupassistant":
@@ -733,9 +719,8 @@ def main():
                     iaslog("Waiting for user script to complete: %s" % path)
                     time.sleep(0.5)
 
-                # Log userscript item rumtime
-                write_item_total_runtime(stage, name, userscript_runtime_start)
-
+            # Log item runtime
+            write_item_total_runtime(stage, name, item_runtime_start)
     # Cleanup and send good exit status
     cleanup(0)
 
