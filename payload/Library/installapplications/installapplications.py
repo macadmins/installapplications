@@ -434,6 +434,13 @@ def cleanup(exit_code):
     sys.exit(exit_code)
 
 
+def write_item_total_runtime(stage, item_name, item_start_time):
+    item_runtime = round(time.time() - item_start_time, 2)
+    iaslog("%s item ran for %s seconds" % (item_name, item_runtime))
+    ias_item_runtimes_dict[stage].update({item_name: item_runtime})
+    with open(ias_item_runtimes_plist, 'wb') as ias_runtimes_file:
+        plistlib.dump(ias_item_runtimes_dict, ias_runtimes_file)
+
 def main():
     # Options
     usage = "%prog [options]"
@@ -533,6 +540,10 @@ def main():
     userid = str(getconsoleuser()[1])
     global reboot
     reboot = opts.reboot
+    global ias_item_runtimes_dict
+    ias_item_runtimes_dict = {}
+    global ias_item_runtimes_plist
+    ias_item_runtimes_plist = os.path.join(ialogpath, 'ia_item_runtimes.plist')
 
     # hardcoded json fileurl path
     jsonpath = os.path.join(iapath, "bootstrap.json")
@@ -601,6 +612,8 @@ def main():
 
     # Process all stages
     for stage in stages:
+        if stage not in ias_item_runtimes_dict.keys():
+            ias_item_runtimes_dict[stage] = {}
         iaslog("Beginning %s" % stage)
         if stage == "preflight":
             # Ensure we actually have a preflight key in the json
@@ -636,6 +649,9 @@ def main():
                             "session."
                         )
                         time.sleep(1)
+
+            # Start item runtime timer
+            item_runtime_start = time.time()
 
             if type == "package":
                 packageid = item["packageid"]
@@ -703,6 +719,8 @@ def main():
                     iaslog("Waiting for user script to complete: %s" % path)
                     time.sleep(0.5)
 
+            # Log item runtime
+            write_item_total_runtime(stage, name, item_runtime_start)
     # Cleanup and send good exit status
     cleanup(0)
 
