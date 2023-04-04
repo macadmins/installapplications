@@ -328,7 +328,7 @@ def runuserscript(iauserscriptpath):
         return False
 
 
-def download_if_needed(item, stage, type, opts):
+def download_if_needed(item, stage, type, retries, retrywait, opts):
     # Process item if middleware exists
     item = process_request_options(item)
     # Check if the file exists and matches the expected hash.
@@ -351,12 +351,14 @@ def download_if_needed(item, stage, type, opts):
         time.sleep(0.5)
         # Check the files hash and redownload until it's
         # correct. Bail after three times and log event.
-        failsleft = 3
+        failsleft = retries
         while not hash == gethash(path):
             iaslog(
                 "Hash failed for %s - received: %s expected"
                 ": %s" % (name, gethash(path), hash)
             )
+            iaslog("Waiting %s seconds before attempting download again..." % retrywait)
+            time.sleep(retrywait)
             downloadfile(item)
             failsleft -= 1
             if failsleft == 0:
@@ -632,8 +634,15 @@ def main():
             except KeyError as e:
                 iaslog("Invalid item %s: %s" % (repr(item), str(e)))
                 continue
+            # Set number or retries, and wait interval between retries
+            try:
+                retries = item["retries"]
+                retrywait = item["retrywait"]
+            except KeyError as e:
+                retries = 3
+                retrywait = 5
+                continue
             iaslog("%s processing %s %s at %s" % (stage, type, name, path))
-
             # On userland stage, we want to wait until we are actually
             # in the user's session.
             if stage == "userland":
@@ -678,14 +687,14 @@ def main():
                     )
                 else:
                     # Download the package if it isn't already on disk.
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, retries, retrywait, opts)
 
                     iaslog("Installing %s from %s" % (name, path))
                     # Install the package
                     installpackage(item["file"])
             elif type == "rootscript":
                 if "url" in item:
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, retries, retrywait, opts)
                 iaslog("Starting root script: %s" % path)
                 try:
                     donotwait = item["donotwait"]
@@ -704,7 +713,7 @@ def main():
                 runrootscript(path, donotwait)
             elif type == "userscript":
                 if "url" in item:
-                    download_if_needed(item, stage, type, opts)
+                    download_if_needed(item, stage, type, retries, retrywait, opts)
                 if stage == "setupassistant":
                     iaslog(
                         "Detected setupassistant and user script. "
