@@ -637,11 +637,12 @@ def main():
             # Set number or retries, and wait interval between retries
             try:
                 retries = item["retries"]
-                retrywait = item["retrywait"]
             except KeyError as e:
                 retries = 3
+            try:
+                retrywait = item["retrywait"]
+            except KeyError as e:
                 retrywait = 5
-                continue
             iaslog("%s processing %s %s at %s" % (stage, type, name, path))
             # On userland stage, we want to wait until we are actually
             # in the user's session.
