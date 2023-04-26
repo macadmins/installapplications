@@ -372,6 +372,8 @@ You can pass an unlimited amount of `--item` arguments, each one with the follow
 * item-type - required, generatejson will detect package vs script. Scripts default to rootscript, so pass "userscript" to this variable if your item is a userscript.
 * item-url - required, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
 * script-do-not-wait - required, only applies to userscript and rootscript item-types. Defaults to false.
+* retries - optional, integer value that defaults to 3 if not specified
+* retrywait - optional, integer value that defaults to 5 if not specified
 
 Run the tool:
 
@@ -391,6 +393,8 @@ item-stage='setupassistant' \
 item-type='package' \
 item-url='https://github.com/setupassistant/package.pkg' \
 script-do-not-wait=False \
+retries=5 \
+retrywait=10 \
 --item \
 item-name='userland user script' \
 item-path='/localpath/userscript.py' \

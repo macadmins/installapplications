@@ -10,6 +10,8 @@
 # item-url='A url' \
 # script-do-not-wait='A boolean' \
 # pkg-skip-if='A string' \
+# retries='An integer' \
+# retrywait='An integer' \
 # --base-url URL \
 # --output PATH
 
@@ -111,7 +113,9 @@ def build_item_dict(itemsToProcess, base_url):
             'item-type': '',
             'item-url': '',
             'script-do-not-wait': '',
-            'pkg-skip-if': ''
+            'pkg-skip-if': '',
+            'retries': int,
+            'retrywait': int
         },
         ...
     ]
@@ -239,7 +243,7 @@ def main():
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait',
-                            'pkg-skip-if'),
+                            'pkg-skip-if', 'retries', 'retrywait'),
                         help='Required: Options for item. All items are \
                         required. Scripts default to rootscript and stage \
                         Scripts default to rootscript and stage defaults to userland')
