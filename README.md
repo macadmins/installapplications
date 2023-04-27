@@ -293,6 +293,8 @@ The JSON structure is quite simple. You supply the following:
 - package id (to check for package receipts)
 - type of item (currently `rootscript`, `package` or `userscript`)
 - skip_if criteria to skip a pkg (currently `x86_64`, `intel`, `arm64` or `apple_silicon`)
+- retries is the number of times an item is retried to download (defaults to 3 if not set)
+- retrywait is the number of seconds to wait before attempting a retry to download (defaults to 5 if not set)
 
 The following is an example JSON:
 
@@ -305,7 +307,9 @@ The following is an example JSON:
       "hash": "sha256 hash",
       "name": "Example Preflight Script",
       "type": "rootscript",
-      "url": "https://domain.tld/preflight_script.py"
+      "url": "https://domain.tld/preflight_script.py",
+      "retries": 5,
+      "retrywait": 10
     }
   ],
   "setupassistant": [
@@ -316,7 +320,9 @@ The following is an example JSON:
       "version": "1.0",
       "hash": "sha256 hash",
       "name": "setupassistant Package Name",
-      "type": "package"
+      "type": "package",
+      "retries": 5,
+      "retrywait": 10
     }
   ],
   "userland": [
@@ -328,7 +334,9 @@ The following is an example JSON:
       "hash": "sha256 hash",
       "name": "Stage 1 Package Name",
       "skip_if": "x86_64",
-      "type": "package"
+      "type": "package",
+      "retries": 5,
+      "retrywait": 10
     },
     {
       "file": "/Library/installapplications/userland_examplerootscript.py",
@@ -364,6 +372,8 @@ You can pass an unlimited amount of `--item` arguments, each one with the follow
 * item-type - required, generatejson will detect package vs script. Scripts default to rootscript, so pass "userscript" to this variable if your item is a userscript.
 * item-url - required, if --base-url is set generatejson will auto-generate the URL as base-url/stage/item-file-name. You can override this automatic generation by passing a URL to the item here.
 * script-do-not-wait - required, only applies to userscript and rootscript item-types. Defaults to false.
+* retries - optional, integer value that defaults to 3 if not specified
+* retrywait - optional, integer value that defaults to 5 if not specified
 
 Run the tool:
 
@@ -383,6 +393,8 @@ item-stage='setupassistant' \
 item-type='package' \
 item-url='https://github.com/setupassistant/package.pkg' \
 script-do-not-wait=False \
+retries=5 \
+retrywait=10 \
 --item \
 item-name='userland user script' \
 item-path='/localpath/userscript.py' \
