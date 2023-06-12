@@ -227,6 +227,11 @@ def build_item_dict(itemsToProcess, base_url):
             except:
                 pass
 
+        # Add retries and retry wait if they're set
+        if item['retries'] is not None:
+            itemJson['retries'] = item['retries']
+        if item['retrywait'] is not None:
+            itemJson['retrywait'] = item['retrywait']
         # Append the info to the appropriate stage
         stages[itemStage].append(itemJson)
 
