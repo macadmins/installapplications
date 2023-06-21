@@ -227,11 +227,12 @@ def build_item_dict(itemsToProcess, base_url):
             except:
                 pass
 
-        # Add retries and retry wait if they're set
+        # Add retries and retry wait if they're set. Cast to int because
+        # argparse defaults to these being strings.
         if item['retries'] is not None:
-            itemJson['retries'] = item['retries']
+            itemJson['retries'] = int(item['retries'])
         if item['retrywait'] is not None:
-            itemJson['retrywait'] = item['retrywait']
+            itemJson['retrywait'] = int(item['retrywait'])
         # Append the info to the appropriate stage
         stages[itemStage].append(itemJson)
 
