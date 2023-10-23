@@ -1,6 +1,6 @@
 # encoding: utf-8
 #
-# Copyright 2009-2019 Greg Neagle.
+# Copyright 2009-2023 Greg Neagle.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,10 @@ gurl.py
 Created by Greg Neagle on 2013-11-21.
 Modified in Feb 2016 to add support for NSURLSession.
 Updated June 2019 for compatibility with Python 3 and PyObjC 5.1.2+
+Updated May 2022 for compatibilty with PyObjC 8.5 on macOS Mojave
 
 curl replacement using NSURLConnection and friends
 
-Tested with PyObjC 2.5.1 (inlcuded with macOS)
-and with PyObjC 5.2b1. Should also work with PyObjC 5.1.2.
-May fail with other versions of PyObjC due to issues with completion handler
-signatures.
 """
 from __future__ import absolute_import, print_function
 
@@ -61,8 +58,41 @@ from Foundation import (NSBundle, NSRunLoop, NSData, NSDate,
                         NSPropertyListMutableContainersAndLeaves,
                         NSPropertyListXMLFormat_v1_0)
 
+from Security import (errSecSuccess,
+                      kCFBooleanTrue,
+                      kSecClass, kSecClassIdentity,
+                      kSecMatchLimit, kSecMatchLimitAll,
+                      kSecReturnRef,
+                      SecCertificateCopyData, SecIdentityCopyCertificate,
+                      SecIdentityGetTypeID,
+                      SecItemCopyMatching)
+
+from asn1crypto.x509 import Certificate, Name
+
+
+# patch the credentialWithIdentity:certificates:persistence: signature
+# see https://github.com/ronaldoussoren/pyobjc/issues/320#issuecomment-784278944
+# more changes May 2022 to work around some issues with PyObjC 8.5 and
+# macOS Mojave (and presumably earlier)
+import objc
+objc.registerCFSignature(
+    "SecIdentityRef",
+    b"^{__SecIdentity=}", SecIdentityGetTypeID()
+)
+objc.registerMetaDataForSelector(
+    b'NSURLCredential',
+    b'credentialWithIdentity:certificates:persistence:',
+    {'arguments': {
+       2: {'null_accepted': False, 'type': b'^{__SecIdentity=}'},
+     },
+     'classmethod': True,
+     'hidden': False,
+     'retval': {'_template': True, 'type': b"@"}}
+)
+
 try:
-    from Foundation import NSURLSession, NSURLSessionConfiguration
+    from Foundation import (NSURLSession, NSURLSessionConfiguration,
+                            NSURLCredentialPersistenceForSession)
     from CFNetwork import (kCFNetworkProxiesHTTPSEnable,
                            kCFNetworkProxiesHTTPEnable)
     NSURLSESSION_AVAILABLE = True
@@ -383,9 +413,10 @@ class Gurl(NSObject):
         '''NSURLSessionTaskDelegate method.'''
         if self.destination and self.destination_path:
             self.destination.close()
-            self.removeExpectedSizeFromStoredHeaders()
         if error:
             self.recordError_(error)
+        else:
+            self.removeExpectedSizeFromStoredHeaders()
         self.done = True
 
     def connection_didFailWithError_(self, _connection, error):
@@ -610,6 +641,8 @@ class Gurl(NSObject):
                     None)
             else:
                 challenge.sender().cancelAuthenticationChallenge_(challenge)
+
+        # Handle HTTP Basic and Digest challenge
         if self.username and self.password and authenticationMethod in [
                 'NSURLAuthenticationMethodDefault',
                 'NSURLAuthenticationMethodHTTPBasic',
@@ -621,6 +654,85 @@ class Gurl(NSObject):
                 NSURLCredential.credentialWithUser_password_persistence_(
                     self.username, self.password,
                     NSURLCredentialPersistenceNone))
+            if completionHandler:
+                completionHandler(
+                    NSURLSessionAuthChallengeUseCredential, credential)
+            else:
+                challenge.sender().useCredential_forAuthenticationChallenge_(
+                    credential, challenge)
+
+        # Handle Client Certificate challenge
+        elif authenticationMethod == 'NSURLAuthenticationMethodClientCertificate':
+            self.log('Client certificate required')
+
+            # get issuers info from the response
+            expected_issuer_dicts = []
+            for dn in protectionSpace.distinguishedNames():
+                raw = dn.bytes().tobytes()
+                name = Name.load(raw)
+                expected_issuer_dicts.append(dict(name.native))
+                self.log('Accepted certificate-issuing authority: %s'
+                         % name.human_friendly)
+            if not expected_issuer_dicts:
+                self.log("The server didn't sent the list of "
+                         "acceptable certificate-issuing authorities")
+                if completionHandler:
+                    completionHandler(
+                        NSURLSessionAuthChallengeCancelAuthenticationChallenge,
+                        None
+                    )
+                else:
+                    challenge.sender().cancelAuthenticationChallenge_(challenge)
+
+            # search for a matching identity (cert paired with private key)
+            status, identity_refs = SecItemCopyMatching(
+                {kSecClass: kSecClassIdentity,
+                 kSecReturnRef: kCFBooleanTrue,
+                 kSecMatchLimit: kSecMatchLimitAll},
+                None
+            )
+            if status != errSecSuccess:
+                self.log('Could not list keychain certificates %s' % status)
+                if completionHandler:
+                    completionHandler(
+                        NSURLSessionAuthChallengeCancelAuthenticationChallenge,
+                        None
+                    )
+                else:
+                    challenge.sender().cancelAuthenticationChallenge_(challenge)
+                # return since error getting certs from keychain
+                # (identity_refs is None, crashes if we fall through to loop)
+                return
+
+            # loop through results to find cert that matches issuer
+            for identity_ref in identity_refs:
+                status, cert_ref = SecIdentityCopyCertificate(identity_ref, None)
+                if status != errSecSuccess:
+                    continue
+                cert_data = SecCertificateCopyData(cert_ref)
+                cert = Certificate.load(cert_data.bytes().tobytes())
+                issuer_dict = dict(cert.native["tbs_certificate"]["issuer"])
+                if issuer_dict in expected_issuer_dicts:
+                    self.log("Found matching identity")
+                    break
+            else:
+                self.log('Could not find matching identity')
+                if completionHandler:
+                    completionHandler(
+                        NSURLSessionAuthChallengeCancelAuthenticationChallenge,
+                        None
+                    )
+                else:
+                    challenge.sender().cancelAuthenticationChallenge_(challenge)
+                # return since didn't find matching identity
+                return
+
+            self.log("Will attempt to authenticate")
+            credential = NSURLCredential.credentialWithIdentity_certificates_persistence_(
+                identity_ref,
+                None,
+                NSURLCredentialPersistenceForSession
+            )
             if completionHandler:
                 completionHandler(
                     NSURLSessionAuthChallengeUseCredential, credential)
