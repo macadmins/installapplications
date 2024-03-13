@@ -73,6 +73,7 @@ You can find an example on how this was done by looking at InstallApplications' 
 - SimpleMDM
 - Mosyle
 - Jamf School
+- [Fleet](https://fleetdm.com/docs/using-fleet/mdm-macos-setup-experience#bootstrap-package)
 
 ### A note about other MDMs
 
