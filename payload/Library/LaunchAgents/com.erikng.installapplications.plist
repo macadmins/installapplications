@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.erikng.installapplications</string>
+	<string>com.erikng.installapplications.launchagent</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/Library/installapplications/Python.framework/Versions/Current/bin/python3</string>
