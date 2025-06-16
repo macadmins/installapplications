@@ -12,6 +12,7 @@
 # pkg-skip-if='A string' \
 # retries='An integer' \
 # retrywait='An integer' \
+# required='A boolean' \
 # --base-url URL \
 # --output PATH
 
@@ -115,7 +116,8 @@ def build_item_dict(itemsToProcess, base_url):
             'script-do-not-wait': '',
             'pkg-skip-if': '',
             'retries': int,
-            'retrywait': int
+            'retrywait': int,
+            'required': '',
         },
         ...
     ]
@@ -227,6 +229,22 @@ def build_item_dict(itemsToProcess, base_url):
             except:
                 pass
 
+            # Check crappy way of doing booleans
+            try:
+                if item['required'] in ('true', 'True', '1',
+                                                  'false', 'False', '0'):
+                    # If True, pass the key to the item
+                    if item['required'] in ('true', 'True', '1'):
+                        itemJson['required'] = True
+                else:
+                    print(
+                        'required malformed: %s ' %
+                        str(item['required'])
+                    )
+                    exit(1)
+            except:
+                itemJson['required'] = False
+
         # Add retries and retry wait if they're set. Cast to int because
         # argparse defaults to these being strings.
         if item['retries'] is not None:
@@ -245,11 +263,11 @@ def main():
                         help='Base URL to where root dir is hosted')
     parser.add_argument('--output', default=None, action='store',
                         help='Required: Output directory to save json')
-    parser.add_argument('--item', default=None, action='append', nargs=9,
+    parser.add_argument('--item', default=None, action='append', nargs=10,
                         metavar=(
                             'item-name', 'item-path', 'item-stage',
                             'item-type', 'item-url', 'script-do-not-wait',
-                            'pkg-skip-if', 'retries', 'retrywait'),
+                            'pkg-skip-if', 'retries', 'retrywait', 'required'),
                         help='Required: Options for item. All items are \
                         required. Scripts default to rootscript and stage \
                         Scripts default to rootscript and stage defaults to userland')
