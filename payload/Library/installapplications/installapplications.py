@@ -25,7 +25,6 @@
 # https://github.com/munki/munki
 # Notice a pattern?
 
-from distutils.version import LooseVersion
 from Foundation import NSLog
 from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 import hashlib
@@ -46,6 +45,121 @@ import gurl  # noqa
 
 
 g_dry_run = False
+
+
+def _cmp(x, y):
+    """
+    Replacement for built-in function cmp that was removed in Python 3
+
+    Compare the two objects x and y and return an integer according to
+    the outcome. The return value is negative if x < y, zero if x == y
+    and strictly positive if x > y.
+    """
+    return (x > y) - (x < y)
+
+
+class LooseVersion():
+    '''Class based on distutils.version.LooseVersion to compare things like
+    "10.6" and "10.6.0" as equal'''
+
+    component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
+
+    def parse(self, vstring):
+        """parse function from distutils.version.LooseVersion"""
+        # I've given up on thinking I can reconstruct the version string
+        # from the parsed tuple -- so I just store the string here for
+        # use by __str__
+        self.vstring = vstring
+        components = [x for x in self.component_re.split(vstring) if x and x != '.']
+        for i, obj in enumerate(components):
+            try:
+                components[i] = int(obj)
+            except ValueError:
+                pass
+
+        self.version = components
+
+    def __str__(self):
+        """__str__ function from distutils.version.LooseVersion"""
+        return self.vstring
+
+    def __repr__(self):
+        """__repr__ function adapted from distutils.version.LooseVersion"""
+        return "MunkiLooseVersion ('%s')" % str(self)
+
+    def __init__(self, vstring=None):
+        """init method"""
+        if vstring is None:
+            # treat None like an empty string
+            self.parse('')
+        if vstring is not None:
+            try:
+                if isinstance(vstring, unicode):
+                    # unicode string! Why? Oh well...
+                    # convert to string so version.LooseVersion doesn't choke
+                    vstring = vstring.encode('UTF-8')
+            except NameError:
+                # python 3
+                pass
+            self.parse(str(vstring))
+
+    def _pad(self, version_list, max_length):
+        """Pad a version list by adding extra 0 components to the end
+        if needed"""
+        # copy the version_list so we don't modify it
+        cmp_list = list(version_list)
+        while len(cmp_list) < max_length:
+            cmp_list.append(0)
+        return cmp_list
+
+    def _compare(self, other):
+        """Compare MunkiLooseVersions"""
+        if not isinstance(other, LooseVersion):
+            other = LooseVersion(other)
+
+        max_length = max(len(self.version), len(other.version))
+        self_cmp_version = self._pad(self.version, max_length)
+        other_cmp_version = self._pad(other.version, max_length)
+        cmp_result = 0
+        for index, value in enumerate(self_cmp_version):
+            try:
+                cmp_result = _cmp(value, other_cmp_version[index])
+            except TypeError:
+                # integer is less than character/string
+                if isinstance(value, int):
+                    return -1
+                return 1
+            if cmp_result:
+                return cmp_result
+        return cmp_result
+
+    def __hash__(self):
+        """Hash method"""
+        return hash(self.version)
+
+    def __eq__(self, other):
+        """Equals comparison"""
+        return self._compare(other) == 0
+
+    def __ne__(self, other):
+        """Not-equals comparison"""
+        return self._compare(other) != 0
+
+    def __lt__(self, other):
+        """Less than comparison"""
+        return self._compare(other) < 0
+
+    def __le__(self, other):
+        """Less than or equals comparison"""
+        return self._compare(other) <= 0
+
+    def __gt__(self, other):
+        """Greater than comparison"""
+        return self._compare(other) > 0
+
+    def __ge__(self, other):
+        """Greater than or equals comparison"""
+        return self._compare(other) >= 0
 
 
 def iaslog(text):
@@ -163,6 +277,7 @@ def launchctl(*arg):
     output, err = run.communicate()
     return output
 
+
 def process_request_options(options):
     """
     Checks ia folder for a file that starts with middleware.
@@ -181,6 +296,7 @@ def process_request_options(options):
         # middleware module must have this function
         options = middleware.process_request_options(options)
     return options
+
 
 def downloadfile(options):
     # Process options if middleware exists
@@ -442,6 +558,7 @@ def write_item_total_runtime(stage, item_name, item_start_time):
     ias_item_runtimes_dict[stage].update({item_name: item_runtime})
     with open(ias_item_runtimes_plist, 'wb') as ias_runtimes_file:
         plistlib.dump(ias_item_runtimes_dict, ias_runtimes_file)
+
 
 def main():
     # Options
