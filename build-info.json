@@ -6,9 +6,9 @@
     "ownership": "recommended",
     "postinstall_action": "none",
     "signing_info": {
-        "identity": "Mac Installer: Erik Gomez (XXXXXXXXXXX)",
+        "identity": "Developer Installer: Erik Gomez (U7DN82F4L9)",
         "timestamp": true
     },
     "suppress_bundle_relocation": true,
-    "version": "2.0.3"
+    "version": "2.0.4"
 }

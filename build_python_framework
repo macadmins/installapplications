@@ -5,64 +5,49 @@
 
 # IMPORTANT
 # Run this with your current directory being the path where this script is located
-
-TOOLSDIR=$(dirname $0)
+DEV_APPLICATION_ID='Developer ID Application: Erik Gomez (U7DN82F4L9)'
+# Harcoded (commit) versions of relocatable-python
+RP_SHA="fb4dd9b024b249c71713f14d887f4bcea78aa8b0" # https://github.com/gregneagle/relocatable-python/commits/main/
 REQUIREMENTS="${TOOLSDIR}/py3_requirements.txt"
-MACOS_VERSION=11.0 # use 10.9 for non-universal
-PYTHON_BIN_VERSION=3.9
-PYTHON_VERSION=3.9.1
+MACOS_VERSION=11 # use 10.9 for non-universal
+PYTHON_VERSION=3.13.8
+PYTHON_MAJOR_VERSION=3.13
 PYTHON_PRERELEASE_VERSION=
 PYTHON_BASEURL="https://www.python.org/ftp/python/%s/python-%s${PYTHON_PRERELEASE_VERSION}-macos%s.pkg"
 PYTHONTOOLDIR="/tmp/relocatable-python-git"
-CONSOLEUSER=$(/usr/bin/stat -f "%Su" /dev/console)
 FRAMEWORKDIR="/Library/installapplications"
+PYTHON_BIN="$FRAMEWORKDIR/Python.framework/Versions/Current/bin/python3"
+PYTHON_BIN_NEW="$FRAMEWORKDIR/Python.framework/Versions/Current/Resources/Python.app/Contents/MacOS/Python"
 PIPCACHEDIR="/Users/${CONSOLEUSER}/Library/Caches/pip"
-XCODE_SELECT=$(/usr/bin/xcode-select -p)
+RP_BINDIR="/tmp/relocatable-python"
+TYPE="recommended"
+XCODE_PATH="/Applications/Xcode.app"
+SITE_PACKAGES=~/Library/Python/${PYTHON_MAJOR_VERSION}/lib/python/site-packages
+SITE_PACKAGES_BACKUP=~/Library/Python/${PYTHON_MAJOR_VERSION}/lib/python/site-packages-bk
 
-# Sanity checks.
-GIT=$(which git)
-WHICH_GIT_RESULT="$?"
-if [ "${WHICH_GIT_RESULT}" != "0" ]; then
-    echo "Could not find git in command path. Maybe it's not installed?" 1>&2
-    echo "You can get a Git package here:" 1>&2
-    echo "    https://git-scm.com/download/mac"
-    exit 1
-fi
-if [ ! -f "${REQUIREMENTS}" ]; then
-    echo "Missing requirements file at ${REQUIREMENTS}." 1>&2
-    exit 1
-fi
+# Set python bin version based on PYTHON_VERSION
+PYTHON_BIN_VERSION="${PYTHON_VERSION%.*}"
 
-# Create framework path if not present
+# Variables
+TOOLSDIR=$(dirname $0)
+OUTPUTSDIR="$TOOLSDIR/outputs"
+CONSOLEUSER=$(/usr/bin/stat -f "%Su" /dev/console)
+RP_ZIP="/tmp/relocatable-python.zip"
+
+echo "Creating InstallApplications Python Framework - $TYPE"
+echo ""
+
+# Create framework path if not present with 777 so sudo is not needed
 if [ ! -d "${FRAMEWORKDIR}" ]; then
-    /usr/bin/sudo /bin/mkdir -p "${FRAMEWORKDIR}"
+    /usr/bin/sudo /bin/mkdir -m 777 -p "${FRAMEWORKDIR}"
 fi
 
-# Give 777 permissions so we don't have to use sudo for other commands
-if [ -d "${FRAMEWORKDIR}" ]; then
-    /usr/bin/sudo /bin/chmod -R 777 "${FRAMEWORKDIR}"
-fi
-
-# remove existing library Python.framework if present
+# remove existing Python.framework if present
 if [ -d "${FRAMEWORKDIR}/Python.framework" ]; then
-    /bin/rm -rf "${FRAMEWORKDIR}/Python.framework"
+    /usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}/Python.framework"
 fi
-
-# clone our relocatable-python tool
-if [ -d "${PYTHONTOOLDIR}" ]; then
-    /usr/bin/sudo /bin/rm -rf "${PYTHONTOOLDIR}"
-fi
-echo "Cloning relocatable-python tool from github..."
-git clone https://github.com/gregneagle/relocatable-python.git "${PYTHONTOOLDIR}"
-CLONE_RESULT="$?"
-if [ "${CLONE_RESULT}" != "0" ]; then
-    echo "Error cloning relocatable-python tool repo: ${CLONE_RESULT}" 1>&2
-    exit 1
-fi
-
-# remove existing munki-pkg Python.framework if present
-if [ -d "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework" ]; then
-    /bin/rm -rf "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework"
+if [ -d "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework" ]; then
+    /usr/bin/sudo /bin/rm -rf "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework"
 fi
 
 # remove existing library Python.framework if present
@@ -71,42 +56,95 @@ if [ -d "${PIPCACHEDIR}" ]; then
     /usr/bin/sudo /bin/rm -rf "${PIPCACHEDIR}"
 fi
 
-# build the framework
-if [[ "${XCODE_SELECT}" != "/Applications/Xcode.app/Contents/Developer" ]]; then
-    echo "Building the universal python framework may result in errors due to Xcode not being installed"
+# Ensure Xcode is set to run-time
+sudo xcode-select -s "$XCODE_PATH"
+
+if [ -e $XCODE_BUILD_PATH ]; then
+  XCODE_BUILD="$XCODE_BUILD_PATH"
+else
+  ls -la /Applications
+  echo "Could not find required Xcode build. Exiting..."
+  exit 1
 fi
-"${PYTHONTOOLDIR}/make_relocatable_python_framework.py" \
-    --baseurl "${PYTHON_BASEURL}" \
-    --python-version "${PYTHON_VERSION}" \
-    --os-version "${MACOS_VERSION}" \
-    --pip-requirements "${REQUIREMENTS}" \
-    --destination "${FRAMEWORKDIR}" \
-    --upgrade-pip
 
-# move the framework
-echo "Moving Python.framework to InstallApplications munki-pkg payload folder"
-/bin/mv "${FRAMEWORKDIR}/Python.framework" "$TOOLSDIR/payload/${FRAMEWORKDIR}"
+# Download specific version of relocatable-python
+echo "Downloading relocatable-python tool from github..."
+echo ""
+if [ -f "${RP_ZIP}" ]; then
+    /usr/bin/sudo /bin/rm -rf ${RP_ZIP}
+fi
+/usr/bin/curl https://github.com/gregneagle/relocatable-python/archive/${RP_SHA}.zip -L -o ${RP_ZIP}
+if [ -d ${RP_BINDIR} ]; then
+    /usr/bin/sudo /bin/rm -rf ${RP_BINDIR}
+fi
+/usr/bin/unzip ${RP_ZIP} -d ${RP_BINDIR}
+DL_RESULT="$?"
+if [ "${DL_RESULT}" != "0" ]; then
+    echo "Error downloading relocatable-python tool: ${DL_RESULT}" 1>&2
+    exit 1
+fi
 
-# take ownership of the payload folder
-echo "Taking ownership of the file to not break git"
-/usr/bin/sudo /usr/sbin/chown -R ${CONSOLEUSER}:wheel "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework"
+# remove existing Python package folders and recreate
+echo "Removing existing Python package folders and recreating"
+echo ""
+if [ -d "$TOOLSDIR" ]; then
+    /bin/mkdir -p "$TOOLSDIR/scripts"
+    /bin/rm -rf "$OUTPUTSDIR"
+    /bin/mkdir -p "$OUTPUTSDIR"
+    /bin/mkdir -p "$TOOLSDIR/payload${FRAMEWORKDIR}"
+    /usr/bin/sudo /usr/sbin/chown -R ${CONSOLEUSER}:wheel "$TOOLSDIR"
+else
+fi
 
-# ad-hoc re-sign the framework so it will run on Apple Silicon
-echo "Adding ad-hoc code signing so the framework will run on Apple Silicon..."
-/usr/bin/codesign -s - --deep --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Resources/Python.app"
-/usr/bin/codesign -s - --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/Python"
-/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/bin/" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
-/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib/" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
-/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib/" -type f -name "*dylib" -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+# Move site-packages temporarily
+if [ -d "$SITE_PACKAGES" ]; then
+  echo "Temporarily moving python installed site-packages"
+  echo ""
+  /bin/mv $SITE_PACKAGES $SITE_PACKAGES_BACKUP
+fi
 
-# Clean up workspace
-if [ -d "${FRAMEWORKDIR}" ]; then
-    /usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}"
+# build the framework
+# Force the C path depending on the version of Python to allow tools like cffi/xattr to build without wheels otherwise it errors
+# Can't use Apple's headers for 3.10 and higher as they are (currently) 3.9
+# C_INCLUDE_PATH="/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/Current/Headers/"
+
+export C_INCLUDE_PATH="/Library/installapplications/Python.framework/Versions/Current/Headers/"
+
+C_INCLUDE_PATH="/Library/installapplications/Python.framework/Versions/Current/Headers/" RP_EXTRACT_BINDIR="${RP_BINDIR}/relocatable-python-${RP_SHA}"
+"${RP_EXTRACT_BINDIR}/make_relocatable_python_framework.py" \
+--baseurl "${PYTHON_BASEURL}" \
+--python-version "${PYTHON_VERSION}" \
+--os-version "${MACOS_VERSION}" \
+--upgrade-pip \
+--pip-requirements "${TOOLSDIR}/requirements_${TYPE}.txt" \
+--destination "${FRAMEWORKDIR}"
+
+RP_RESULT="$?"
+if [ "${RP_RESULT}" != "0" ]; then
+    echo "Error running relocatable-python tool: ${RP_RESULT}" 1>&2
+    exit 1
+fi
+
+# Move site-packages temporarily
+if [ -d "$SITE_PACKAGES_BACKUP" ]; then
+  echo "Moving python installed site-packages back to original path"
+  /bin/mv $SITE_PACKAGES_BACKUP $SITE_PACKAGES
+fi
+
+# move the framework to the Python package folder
+echo "Moving Python.framework to payload folder"
+echo ""
+/bin/mv "${FRAMEWORKDIR}/Python.framework" "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework"
+
+RP_RESULT2="$?"
+if [ "${RP_RESULT2}" != "0" ]; then
+    echo "Failed to move Python framework, likely due to a bug with relocatable python" 1>&2
+    exit 1
 fi
 
 # confirm truly universal
-TOTAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.dylib" | /usr/bin/wc -l | /usr/bin/xargs)
-UNIVERSAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.dylib" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
+TOTAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.dylib" | /usr/bin/wc -l | /usr/bin/xargs)
+UNIVERSAL_DYLIB=$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.dylib" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
 if [ "${TOTAL_DYLIB}" != "${UNIVERSAL_DYLIB}" ] ; then
   echo "Dynamic Libraries do not match, resulting in a non-universal Python framework."
   echo "Total Dynamic Libraries found: ${TOTAL_DYLIB}"
@@ -116,13 +154,61 @@ fi
 
 echo "Dynamic Libraries are confirmed as universal"
 
-TOTAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/wc -l | /usr/bin/xargs)
-UNIVERSAL_SO=$(/usr/bin/find "$TOOLSDIR/payload/${FRAMEWORKDIR}/Python.framework/Versions/Current/lib" -name "*.so" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
+TOTAL_SO=$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.so" | /usr/bin/wc -l | /usr/bin/xargs)
+UNIVERSAL_SO=$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.so" | /usr/bin/xargs file | /usr/bin/grep "2 architectures" | /usr/bin/wc -l | /usr/bin/xargs)
 if [ "${TOTAL_SO}" != "${UNIVERSAL_SO}" ] ; then
   echo "Shared objects do not match, resulting in a non-universal Python framework."
   echo "Total shared objects found: ${TOTAL_SO}"
   echo "Universal shared objects found: ${UNIVERSAL_SO}"
+  UNIVERSAL_SO_ARRAY=("${(@f)$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.so" | /usr/bin/xargs file | /usr/bin/grep "2 architectures"  | awk '{print $1;}' | sed 's/:*$//g')}")
+  TOTAL_SO_ARRAY=("${(@f)$(/usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -name "*.so" )}")
+  echo ${TOTAL_SO_ARRAY[@]} ${UNIVERSAL_SO_ARRAY[@]} | tr ' ' '\n' | sort | uniq -u
   exit 1
 fi
 
 echo "Shared objects are confirmed as universal"
+echo ""
+
+# re-sign the framework so it will run on Apple Silicon
+if [ -n "$DEV_APPLICATION_ID" ]; then
+  echo "Adding developer id code signing so the framework will run on Apple Silicon..."
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/bin" -type f -perm -u=x -exec /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -type f -perm -u=x -exec /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -type f -name "*dylib" -exec /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --deep --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Resources/Python.app"
+  /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Python"
+  /usr/bin/codesign --sign "$DEV_APPLICATION_ID" --timestamp --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/Current/Python"
+else
+  echo "Adding ad-hoc code signing so the framework will run on Apple Silicon..."
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/bin" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -type f -perm -u=x -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/find "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib" -type f -name "*dylib" -exec /usr/bin/codesign -s - --preserve-metadata=identifier,entitlements,flags,runtime -f {} \;
+  /usr/bin/codesign -s - --deep --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Resources/Python.app"
+  /usr/bin/codesign -s - --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Python"
+  /usr/bin/codesign -s - --force --preserve-metadata=identifier,entitlements,flags,runtime "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/Current/Python"
+fi
+echo ""
+
+# Print out some information about the signatures
+echo "Printing out signature information"
+/usr/sbin/spctl -a -vvvv "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/Python"
+/usr/sbin/spctl -a -vvvv "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/lib/libssl.3.dylib"
+
+# take ownership of the payload folder
+echo ""
+echo "Taking ownership of the Payload directory"
+/usr/bin/sudo /usr/sbin/chown -R ${CONSOLEUSER}:wheel "$TOOLSDIR/payload"
+
+# Zip and move the framework
+echo ""
+echo "Creating Python.framework.zip"
+ZIPFILE="Python.framework.zip"
+/usr/bin/ditto -c -k --sequesterRsrc "$TOOLSDIR/payload${FRAMEWORKDIR}/" ${ZIPFILE}
+
+/bin/mv ${ZIPFILE} "$OUTPUTSDIR"
+
+# Ensure outputs directory is owned by the current user
+/usr/bin/sudo /usr/sbin/chown -R ${CONSOLEUSER}:wheel "$OUTPUTSDIR"
+
+# Cleanup the temporary files
+/usr/bin/sudo /bin/rm -rf "${FRAMEWORKDIR}"
