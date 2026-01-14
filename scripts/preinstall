@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # If you change your daemon and agent file names, update the following two lines
-launch_agent_plist_name='com.erikng.installapplications'
+launch_agent_plist_name='com.erikng.installapplications.user'
 launch_daemon_plist_name='com.erikng.installapplications'
 
 # Base paths
