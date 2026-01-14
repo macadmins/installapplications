@@ -585,7 +585,7 @@ def main():
     )
     o.add_option(
         "--laidentifier",
-        default="com.erikng.installapplications",
+        default="com.erikng.installapplications.user",
         help=("Optional: Specify LaunchAgent identifier."),
     )
     o.add_option(
