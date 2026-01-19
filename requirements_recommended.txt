@@ -13,7 +13,7 @@ click==8.2.1
 distlib==0.3.9
 docklib==2.0.0
 entrypoints==0.4
-filelock==3.18.0
+filelock==3.20.3
 flake8==7.3.0
 flake8-bugbear==24.12.12
 identify==2.6.12
