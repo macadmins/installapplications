@@ -7,10 +7,10 @@
 # Run this with your current directory being the path where this script is located
 DEV_APPLICATION_ID='Developer ID Application: Erik Gomez (U7DN82F4L9)'
 # Harcoded (commit) versions of relocatable-python
-RP_SHA="fb4dd9b024b249c71713f14d887f4bcea78aa8b0" # https://github.com/gregneagle/relocatable-python/commits/main/
+RP_SHA="8ee72fe3a5dbef733365370ebf44f25022b895ef" # https://github.com/gregneagle/relocatable-python/commits/main/
 REQUIREMENTS="${TOOLSDIR}/py3_requirements.txt"
 MACOS_VERSION=11 # use 10.9 for non-universal
-PYTHON_VERSION=3.13.8
+PYTHON_VERSION=3.13.17
 PYTHON_MAJOR_VERSION=3.13
 PYTHON_PRERELEASE_VERSION=
 PYTHON_BASEURL="https://www.python.org/ftp/python/%s/python-%s${PYTHON_PRERELEASE_VERSION}-macos%s.pkg"
@@ -59,8 +59,8 @@ fi
 # Ensure Xcode is set to run-time
 sudo xcode-select -s "$XCODE_PATH"
 
-if [ -e $XCODE_BUILD_PATH ]; then
-  XCODE_BUILD="$XCODE_BUILD_PATH"
+if [ -d "$XCODE_PATH" ]; then
+  XCODE_BUILD="$XCODE_PATH"
 else
   ls -la /Applications
   echo "Could not find required Xcode build. Exiting..."
@@ -73,7 +73,7 @@ echo ""
 if [ -f "${RP_ZIP}" ]; then
     /usr/bin/sudo /bin/rm -rf ${RP_ZIP}
 fi
-/usr/bin/curl https://github.com/gregneagle/relocatable-python/archive/${RP_SHA}.zip -L -o ${RP_ZIP}
+/usr/bin/curl --fail --location https://github.com/gregneagle/relocatable-python/archive/${RP_SHA}.zip -o ${RP_ZIP} || exit 1
 if [ -d ${RP_BINDIR} ]; then
     /usr/bin/sudo /bin/rm -rf ${RP_BINDIR}
 fi
@@ -115,8 +115,7 @@ C_INCLUDE_PATH="/Library/installapplications/Python.framework/Versions/Current/H
 --baseurl "${PYTHON_BASEURL}" \
 --python-version "${PYTHON_VERSION}" \
 --os-version "${MACOS_VERSION}" \
---upgrade-pip \
---pip-requirements "${TOOLSDIR}/requirements_${TYPE}.txt" \
+--without-pip \
 --destination "${FRAMEWORKDIR}"
 
 RP_RESULT="$?"
@@ -124,6 +123,11 @@ if [ "${RP_RESULT}" != "0" ]; then
     echo "Error running relocatable-python tool: ${RP_RESULT}" 1>&2
     exit 1
 fi
+
+# Bootstrap only from a hash-verified, fixed pip wheel. The upstream helper's
+# --upgrade-pip path first uses the installer's old pip for online installs.
+/bin/zsh "${TOOLSDIR}/prepare_framework.zsh" \
+    "${FRAMEWORKDIR}/Python.framework" "${PYTHON_BIN_VERSION}" "${RP_EXTRACT_BINDIR}" || exit 1
 
 # Move site-packages temporarily
 if [ -d "$SITE_PACKAGES_BACKUP" ]; then
@@ -168,6 +172,12 @@ fi
 
 echo "Shared objects are confirmed as universal"
 echo ""
+
+# Check the relocated runtime and offline pip seeds before signing; these
+# checks can write bytecode caches and must not invalidate signed resources.
+/usr/bin/env -u SSL_CERT_FILE -u SSL_CERT_DIR \
+    "$TOOLSDIR/payload${FRAMEWORKDIR}/Python.framework/Versions/${PYTHON_BIN_VERSION}/bin/python${PYTHON_BIN_VERSION}" \
+    -I "${TOOLSDIR}/verify_framework.py" || exit 1
 
 # re-sign the framework so it will run on Apple Silicon
 if [ -n "$DEV_APPLICATION_ID" ]; then
