@@ -1,0 +1,54 @@
+name: Verify embedded Python framework
+
+on:
+  pull_request:
+    paths:
+      - build_python_framework
+      - prepare_framework.zsh
+      - requirements_recommended.txt
+      - framework_sitecustomize.py
+      - update_ensurepip.py
+      - verify_framework.py
+      - .github/workflows/framework.yml
+  push:
+    branches: [main]
+    paths:
+      - build_python_framework
+      - prepare_framework.zsh
+      - requirements_recommended.txt
+      - framework_sitecustomize.py
+      - update_ensurepip.py
+      - verify_framework.py
+      - .github/workflows/framework.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  framework:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify in temporary staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          zsh -n build_python_framework prepare_framework.zsh
+          # Read the release builder's pins without executing its host setup.
+          RP_SHA=$(sed -n 's/^RP_SHA="\([^"]*\)".*/\1/p' build_python_framework)
+          PYTHON_VERSION=$(sed -n 's/^PYTHON_VERSION=//p' build_python_framework)
+          MAJOR_VERSION=${PYTHON_VERSION%.*}
+          cd "$RUNNER_TEMP"
+          curl -fL "https://github.com/gregneagle/relocatable-python/archive/${RP_SHA}.tar.gz" -o rp.tar.gz
+          tar xzf rp.tar.gz
+          RP_DIR="$RUNNER_TEMP/relocatable-python-${RP_SHA}"
+          /usr/bin/python3 "$RP_DIR/make_relocatable_python_framework.py" \
+            --python-version "$PYTHON_VERSION" --os-version 11 --without-pip \
+            --destination "$RUNNER_TEMP/framework"
+          zsh "$GITHUB_WORKSPACE/prepare_framework.zsh" \
+            "$RUNNER_TEMP/framework/Python.framework" "$MAJOR_VERSION" "$RP_DIR"
+          mv "$RUNNER_TEMP/framework" "$RUNNER_TEMP/relocated"
+          env -u SSL_CERT_FILE -u SSL_CERT_DIR \
+            "$RUNNER_TEMP/relocated/Python.framework/Versions/$MAJOR_VERSION/bin/python$MAJOR_VERSION" \
+            -I "$GITHUB_WORKSPACE/verify_framework.py"

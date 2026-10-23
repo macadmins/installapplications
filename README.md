@@ -26,7 +26,11 @@ Should the need come up for more modules, a PR should be made against the repo w
 
 To reduce the size of the git repository, you **must** create your own Python. To do this, simply run the `./build_python_framework` script within the repository.
 
-This process was tested on Catalina only.
+The framework build uses Python 3.13.17 and requires Xcode on a supported macOS build host.
+
+Rebuild and redistribute the embedded framework to apply the eMudhra/emSign CA mitigation; updating the source requirements does not fix installed copies. The build installs certifi 2026.10.19, bootstraps pip 26.2.2 from a SHA-256 verified wheel, replaces ensurepip’s bundled wheel, and updates virtualenv’s offline seeds. Before signing, it verifies the relocated CA bundles, offline venv creation, and normal HTTPS. See [the Python security advisory](https://discuss.python.org/t/109576).
+
+The framework selects its relocated certifi bundle for stdlib HTTPS by default. Explicit SSL_CERT_FILE overrides and additional trust stores remain the operator’s responsibility. macOS trust updates are also required for the native NSURLSession downloads used by InstallApplications.
 
 ```
 ./build_python_framework
