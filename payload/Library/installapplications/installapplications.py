@@ -222,8 +222,9 @@ def installpackage(packagepath):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        output, rcode = proc.communicate(), proc.returncode
-        installlog = output[0].split("\n")
+        out, err = proc.communicate()
+        installlog = out.decode("utf-8", "replace").split("\n")
+        installlog += err.decode("utf-8", "replace").split("\n")
         # Filter all blank lines after the split.
         for line in [_f for _f in installlog if _f]:
             # Replace any instances of % with a space and any elipsis with
@@ -231,9 +232,10 @@ def installpackage(packagepath):
             # Hopefully this is the only bad characters we will ever run into.
             logline = line.replace("%", " ").replace("\xe2\x80\xa6", "")
             iaslog(logline)
-        return rcode
-    except Exception:
-        pass
+        return proc.returncode
+    except Exception as e:
+        iaslog("Exception running installer: %s" % str(e).replace("%", " "))
+        return 1
 
 
 def checkreceipt(packageid):
@@ -809,7 +811,13 @@ def main():
 
                     iaslog("Installing %s from %s" % (name, path))
                     # Install the package
-                    installpackage(item["file"])
+                    rcode = installpackage(item["file"])
+                    if rcode == 0:
+                        iaslog("Package install succeeded: %s" % name)
+                    else:
+                        iaslog(
+                            "Package install failed: %s (exit code %s)" % (name, rcode)
+                        )
             elif type == "rootscript":
                 if "url" in item:
                     download_if_needed(item, stage, type, retries, retrywait, opts)
